@@ -211,7 +211,7 @@ use stacks_common::types::chainstate::{
 };
 use stacks_common::types::net::PeerAddress;
 use stacks_common::types::{PublicKey, StacksEpochId};
-use stacks_common::util::hash::{to_hex, Hash160, Sha256Sum};
+use stacks_common::util::hash::{to_hex, Hash160, Hash160PubKeyExt, Sha256Sum};
 use stacks_common::util::secp256k1::Secp256k1PrivateKey;
 use stacks_common::util::vrf::{VRFProof, VRFPublicKey};
 use stacks_common::util::{get_epoch_time_ms, get_epoch_time_secs};

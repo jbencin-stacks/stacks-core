@@ -11,7 +11,7 @@ use stacks::core::test_util::{make_contract_call, make_stacks_transfer_serialize
 use stacks::core::{self, EpochList, STACKS_EPOCH_MAX};
 use stacks::util_lib::boot::boot_code_id;
 use stacks_common::types::chainstate::{StacksAddress, StacksBlockId};
-use stacks_common::util::hash::Hash160;
+use stacks_common::util::hash::{Hash160, Hash160PubKeyExt};
 use stacks_common::util::secp256k1::Secp256k1PublicKey;
 use stacks_common::util::sleep_ms;
 

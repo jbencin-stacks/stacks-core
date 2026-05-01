@@ -20,6 +20,7 @@ use std::{error, fmt, io, mem};
 #[macro_use]
 pub mod macros;
 
+pub mod hash;
 pub mod hex;
 pub mod pair;
 pub use hex::{HexDeser, HexError};

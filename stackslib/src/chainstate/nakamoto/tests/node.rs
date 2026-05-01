@@ -21,7 +21,7 @@ use clarity::vm::types::*;
 use rusqlite::params;
 use stacks_common::address::*;
 use stacks_common::types::chainstate::{BlockHeaderHash, StacksAddress, StacksBlockId, VRFSeed};
-use stacks_common::util::hash::Hash160;
+use stacks_common::util::hash::{Hash160, Hash160PubKeyExt};
 use stacks_common::util::secp256k1::Secp256k1PrivateKey;
 use stacks_common::util::vrf::VRFProof;
 

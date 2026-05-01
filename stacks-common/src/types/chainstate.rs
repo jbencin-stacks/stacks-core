@@ -435,10 +435,11 @@ impl StacksMessageCodec for StacksWorkScore {
 }
 
 impl_byte_array_message_codec!(TrieHash, TRIEHASH_ENCODED_SIZE as u32);
-impl_byte_array_message_codec!(Sha512Trunc256Sum, 32);
+// Codec impls for `Hash160` and `Sha512Trunc256Sum` live with their type
+// definitions in `stacks-codec` (orphan rule: both trait and type are now
+// outside this crate).
 
 impl_byte_array_message_codec!(ConsensusHash, 20);
-impl_byte_array_message_codec!(Hash160, 20);
 impl_byte_array_message_codec!(BurnchainHeaderHash, 32);
 impl_byte_array_message_codec!(BlockHeaderHash, 32);
 impl_byte_array_message_codec!(StacksBlockId, 32);

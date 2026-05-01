@@ -22,7 +22,7 @@ use stacks_common::address::C32_ADDRESS_VERSION_MAINNET_SINGLESIG;
 use stacks_common::types::chainstate::{
     BlockHeaderHash, ConsensusHash, StacksAddress, StacksPublicKey,
 };
-use stacks_common::util::hash::{Hash160, Sha512Trunc256Sum};
+use stacks_common::util::hash::{Hash160, Hash160PubKeyExt, Sha512Trunc256Sum};
 use stacks_common::util::secp256k1::Secp256k1PrivateKey;
 
 use crate::chainstate::burn::db::sortdb::SortitionDB;

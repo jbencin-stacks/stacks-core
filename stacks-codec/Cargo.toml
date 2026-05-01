@@ -32,6 +32,7 @@ p256 = { version = "0.13", default-features = false, features = ["std", "serde",
 # Optional dependencies
 getrandom = { version = "0.2", default-features = false, optional = true }
 rand = { workspace = true, optional = true }
+rusqlite = { workspace = true, optional = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 secp256k1 = { version = "0.24.3", default-features = false, features = ["std", "serde", "recovery"] }
@@ -53,6 +54,9 @@ default = ["rand"]
 # Enables the rand module. This flag must be off on deterministic
 # platforms such as CosmWasm.
 rand = ["dep:rand"]
+# Enables `rusqlite::types::{FromSql, ToSql}` impls for the byte-array types.
+# Off by default so the published crate doesn't pull in rusqlite.
+rusqlite = ["dep:rusqlite"]
 serde = []
 
 # Wasm-specific features for easier configuration

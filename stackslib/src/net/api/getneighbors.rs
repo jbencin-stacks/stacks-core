@@ -18,7 +18,7 @@ use clarity::vm::types::QualifiedContractIdentifier;
 use regex::{Captures, Regex};
 use stacks_common::types::net::{PeerAddress, PeerHost};
 use stacks_common::util::get_epoch_time_secs;
-use stacks_common::util::hash::Hash160;
+use stacks_common::util::hash::{Hash160, Hash160PubKeyExt};
 
 use crate::net::db::PeerDB;
 use crate::net::http::{

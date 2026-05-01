@@ -92,7 +92,7 @@ developer-mode = []
 # This pulls in the `nix` or `winapi` dependency.
 ctrlc-handler = ["dep:nix", "dep:winapi"]
 slog_json = ["slog-json"]
-rusqlite = ["dep:rusqlite", "rand"]
+rusqlite = ["dep:rusqlite", "stacks-codec/rusqlite", "rand"]
 # Enables the rand module. This flag must be off on deterministic
 # platforms such as CosmWasm
 rand = ["dep:rand"]

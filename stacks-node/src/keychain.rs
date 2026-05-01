@@ -6,7 +6,7 @@ use stacks_common::address::{
     AddressHashMode, C32_ADDRESS_VERSION_MAINNET_SINGLESIG, C32_ADDRESS_VERSION_TESTNET_SINGLESIG,
 };
 use stacks_common::types::chainstate::StacksAddress;
-use stacks_common::util::hash::{Hash160, Sha256Sum};
+use stacks_common::util::hash::{Hash160, Hash160PubKeyExt, Sha256Sum};
 use stacks_common::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 use stacks_common::util::vrf::{VRFPrivateKey, VRFProof, VRFPublicKey, VRF};
 
@@ -245,7 +245,7 @@ mod tests {
     };
     use stacks_common::address::AddressHashMode;
     use stacks_common::types::chainstate::StacksAddress;
-    use stacks_common::util::hash::{Hash160, Sha256Sum};
+    use stacks_common::util::hash::{Hash160, Hash160PubKeyExt, Sha256Sum};
     use stacks_common::util::vrf::{VRFPrivateKey, VRFProof, VRFPublicKey, VRF};
 
     use super::Keychain;

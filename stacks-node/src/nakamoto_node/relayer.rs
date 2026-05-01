@@ -56,7 +56,7 @@ use stacks_common::types::chainstate::{
 };
 use stacks_common::types::StacksEpochId;
 use stacks_common::util::get_epoch_time_ms;
-use stacks_common::util::hash::Hash160;
+use stacks_common::util::hash::{Hash160, Hash160PubKeyExt};
 #[cfg(test)]
 use stacks_common::util::tests::TestFlag;
 use stacks_common::util::vrf::VRFPublicKey;
@@ -2334,7 +2334,7 @@ pub mod test {
     use stacks::burnchains::Txid;
     use stacks::chainstate::burn::{BlockSnapshot, ConsensusHash, OpsHash, SortitionHash};
     use stacks::types::chainstate::{BlockHeaderHash, BurnchainHeaderHash, SortitionId, TrieHash};
-    use stacks::util::hash::Hash160;
+    use stacks::util::hash::{Hash160, Hash160PubKeyExt};
     use stacks::util::secp256k1::Secp256k1PublicKey;
     use stacks::util::vrf::VRFPublicKey;
 

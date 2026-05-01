@@ -35,7 +35,9 @@ use stacks_common::types::chainstate::{
 };
 use stacks_common::types::{Address, PrivateKey, StacksEpoch, StacksEpochId};
 use stacks_common::util::get_epoch_time_secs;
-use stacks_common::util::hash::{hex_bytes, Hash160, MerkleTree, Sha512Trunc256Sum};
+use stacks_common::util::hash::{
+    hex_bytes, Hash160, Hash160PubKeyExt, MerkleTree, Sha512Trunc256Sum,
+};
 use stacks_common::util::secp256k1::{MessageSignature, Secp256k1PublicKey};
 use stacks_common::util::vrf::{VRFPrivateKey, VRFProof, VRFPublicKey, VRF};
 

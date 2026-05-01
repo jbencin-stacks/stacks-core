@@ -355,6 +355,32 @@ macro_rules! impl_byte_array_newtype {
     };
 }
 
+#[cfg(feature = "rusqlite")]
+#[macro_export]
+macro_rules! impl_byte_array_rusqlite_only {
+    ($thing:ident) => {
+        impl rusqlite::types::FromSql for $thing {
+            fn column_result(
+                value: rusqlite::types::ValueRef,
+            ) -> rusqlite::types::FromSqlResult<Self> {
+                let hex_str = value.as_str()?;
+                let byte_str = $crate::hex::hex_bytes(hex_str)
+                    .map_err(|_e| rusqlite::types::FromSqlError::InvalidType)?;
+                let inst = $thing::from_bytes(&byte_str)
+                    .ok_or(rusqlite::types::FromSqlError::InvalidType)?;
+                Ok(inst)
+            }
+        }
+
+        impl rusqlite::types::ToSql for $thing {
+            fn to_sql(&self) -> rusqlite::Result<rusqlite::types::ToSqlOutput<'_>> {
+                let hex_str = self.to_hex();
+                Ok(hex_str.into())
+            }
+        }
+    };
+}
+
 #[allow(unused_macros)]
 #[macro_export]
 macro_rules! impl_byte_array_serde {

@@ -30,7 +30,7 @@ use stacks_common::types::chainstate::{
     StacksPrivateKey, StacksPublicKey,
 };
 use stacks_common::util::get_epoch_time_secs;
-use stacks_common::util::hash::{to_hex, Hash160, Sha512Trunc256Sum};
+use stacks_common::util::hash::{to_hex, Hash160, Hash160PubKeyExt, Sha512Trunc256Sum};
 use stacks_common::util::pipe::Pipe;
 use stacks_common::util::serde_serializers::{prefix_hex, prefix_opt_hex};
 

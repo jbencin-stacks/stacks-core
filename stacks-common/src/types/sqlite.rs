@@ -21,7 +21,6 @@ use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, ConsensusHash, SortitionId, StacksBlockId, TrieHash,
 };
-use crate::util::hash::{Hash160, Sha512Trunc256Sum};
 use crate::util::secp256k1::MessageSignature;
 use crate::util::vrf::VRFProof;
 
@@ -52,13 +51,13 @@ impl ToSql for StacksAddress {
 // Implement rusqlite traits for a bunch of structs that used to be defined
 //  in the chainstate code
 impl_byte_array_rusqlite_only!(ConsensusHash);
-impl_byte_array_rusqlite_only!(Hash160);
+// rusqlite impls for `Hash160` and `Sha512Trunc256Sum` live in stacks-codec
+// under its `rusqlite` feature (orphan rule: types now defined there).
 impl_byte_array_rusqlite_only!(BlockHeaderHash);
 impl_byte_array_rusqlite_only!(VRFSeed);
 impl_byte_array_rusqlite_only!(BurnchainHeaderHash);
 impl_byte_array_rusqlite_only!(VRFProof);
 impl_byte_array_rusqlite_only!(TrieHash);
-impl_byte_array_rusqlite_only!(Sha512Trunc256Sum);
 impl_byte_array_rusqlite_only!(MessageSignature);
 impl_byte_array_rusqlite_only!(SortitionId);
 impl_byte_array_rusqlite_only!(StacksBlockId);

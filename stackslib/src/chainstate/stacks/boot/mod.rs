@@ -1434,6 +1434,7 @@ pub mod test {
 
     use clarity::vm::contracts::Contract;
     use clarity::vm::types::*;
+    use stacks_common::util::hash::Hash160PubKeyExt;
     use stacks_common::util::secp256k1::Secp256k1PublicKey;
 
     use self::signers_tests::readonly_call;
