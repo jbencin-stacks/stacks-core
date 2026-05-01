@@ -21,6 +21,7 @@ use std::{error, fmt, io, mem};
 pub mod macros;
 
 pub mod hex;
+pub mod pair;
 pub use hex::{HexDeser, HexError};
 
 #[derive(Debug)]

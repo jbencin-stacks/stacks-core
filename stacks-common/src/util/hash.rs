@@ -15,7 +15,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::char::from_digit;
-use std::fmt::Write;
 use std::{fmt, mem};
 
 use ripemd::Ripemd160;
@@ -23,12 +22,13 @@ use serde::de::{Deserialize, Error as de_Error};
 use serde::Serialize;
 use sha2::{Digest, Sha256, Sha512, Sha512_256};
 use sha3::Keccak256;
+// Re-export the hex helpers from `stacks-codec` so existing call sites
+// (`stacks_common::util::hash::{hex_bytes, to_hex, ...}`) keep working.
+pub use stacks_codec::hex::{bin_bytes, bytes_to_hex, hex_bytes, to_bin, to_hex, to_hex_prefixed};
 
 use crate::types::StacksPublicKeyBuffer;
-use crate::util::pair::*;
 use crate::util::secp256k1::Secp256k1PublicKey;
 use crate::util::uint::Uint256;
-use crate::util::HexError;
 
 // hash function for Merkle trees
 pub trait MerkleHashFunc {
@@ -572,96 +572,6 @@ where
 
         hash_acc == *root
     }
-}
-
-// borrowed from Andrew Poelstra's rust-bitcoin library
-/// Convert a hexadecimal-encoded string to its corresponding bytes
-pub fn hex_bytes(s: &str) -> Result<Vec<u8>, HexError> {
-    let mut v = Vec::with_capacity(s.len() / 2);
-    let mut iter = s.chars().pair();
-    // Do the parsing
-    iter.by_ref()
-        .try_fold((), |_, (f, s)| match (f.to_digit(16), s.to_digit(16)) {
-            (None, _) => Err(HexError::BadCharacter(f)),
-            (_, None) => Err(HexError::BadCharacter(s)),
-            (Some(f), Some(s)) => {
-                v.push((f * 0x10 + s) as u8);
-                Ok(())
-            }
-        })?;
-    // Check that there was no remainder
-    match iter.remainder() {
-        Some(_) => Err(HexError::BadLength(s.len())),
-        None => Ok(v),
-    }
-}
-
-/// Convert a binary-encoded string to its corresponding bytes
-pub fn bin_bytes(s: &str) -> Result<Vec<u8>, HexError> {
-    let mut v = Vec::with_capacity(s.len() / 8 + 1);
-    let mut next = 0u8;
-    for (i, c) in s.chars().rev().enumerate() {
-        if c != '0' && c != '1' {
-            return Err(HexError::BadCharacter(c));
-        }
-        if c == '1' {
-            next |= 1 << (i % 8);
-        }
-        if i % 8 == 7 {
-            v.push(next);
-            next = 0;
-        }
-    }
-    if !s.len().is_multiple_of(8) {
-        v.push(next);
-    }
-    v.reverse();
-    Ok(v)
-}
-
-/// Precomputed hex characters for optimized conversion
-const HEX_CHARS: [u8; 16] = *b"0123456789abcdef";
-
-/// Convert a slice of u8 to a hex string, with optional "0x" prefix
-pub fn to_hex_prefixed(s: &[u8], prefix: bool) -> String {
-    let prefix_len = if prefix { 2 } else { 0 };
-    let mut bytes = Vec::with_capacity(s.len() * 2 + prefix_len);
-
-    if prefix {
-        bytes.push(b'0');
-        bytes.push(b'x');
-    }
-
-    for &b in s.iter() {
-        // get the first hex digit by shifting right 4 bits
-        bytes.push(HEX_CHARS[(b >> 4) as usize]);
-
-        // get the second hex digit by masking the lower 4 bits
-        bytes.push(HEX_CHARS[(b & 0x0f) as usize]);
-    }
-
-    // SAFETY: HEX_CHARS only contains valid ASCII characters, so this expect is safe
-    #[allow(clippy::expect_used)]
-    String::from_utf8(bytes).expect("Only valid UTF-8 characters (ASCII hex) should be present")
-}
-
-/// Convert a slice of u8 to a hex string
-pub fn to_hex(s: &[u8]) -> String {
-    to_hex_prefixed(s, false)
-}
-
-/// Convert a slice of u8 into a binary string
-pub fn to_bin(s: &[u8]) -> String {
-    let mut r = String::with_capacity(s.len() * 8);
-    for b in s.iter() {
-        write!(r, "{b:08b}").unwrap();
-    }
-    r
-}
-
-/// Convert a vec of u8 to a hex string
-pub fn bytes_to_hex(s: &[u8]) -> String {
-    to_hex(s)
 }
 
 #[cfg(test)]
