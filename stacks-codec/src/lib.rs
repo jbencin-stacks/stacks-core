@@ -20,6 +20,9 @@ use std::{error, fmt, io, mem};
 #[macro_use]
 pub mod macros;
 
+pub mod hex;
+pub use hex::{HexDeser, HexError};
+
 #[derive(Debug)]
 pub enum Error {
     /// Failed to encode

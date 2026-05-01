@@ -13,3 +13,48 @@ description = "Binary consensus serialization codec for the Stacks blockchain"
 keywords = ["stacks", "stx", "blockchain", "codec", "serialization"]
 readme = "README.md"
 edition = "2021"
+
+[dependencies]
+curve25519-dalek = { version = "4.1.3", default-features = false, features = ["serde"] }
+ed25519-dalek = { workspace = true }
+hashbrown = { workspace = true }
+lazy_static = { workspace = true }
+ripemd = { version = "0.1.1", default-features = false }
+serde = { workspace = true, features = ["derive"] }
+serde_derive = { workspace = true }
+serde_json = { workspace = true }
+sha3 = { version = "0.10.1", default-features = false }
+thiserror = { workspace = true }
+
+# RustCrypto elliptic curve crates
+p256 = { version = "0.13", default-features = false, features = ["std", "serde", "ecdsa"] }
+
+# Optional dependencies
+getrandom = { version = "0.2", default-features = false, optional = true }
+rand = { workspace = true, optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+secp256k1 = { version = "0.24.3", default-features = false, features = ["std", "serde", "recovery"] }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+libsecp256k1 = { version = "0.7.2", default-features = false, features = ["hmac", "lazy-static-context"] }
+
+[target.'cfg(all(any(target_arch = "x86_64", target_arch = "x86", target_arch = "aarch64"), not(any(target_os="windows"))))'.dependencies]
+sha2 = { version = "0.10", features = ["asm"] }
+
+[target.'cfg(any(not(any(target_arch = "x86_64", target_arch = "x86", target_arch = "aarch64")), any(target_os="windows")))'.dependencies]
+sha2 = { version = "0.10" }
+
+[dev-dependencies]
+proptest = "1.6.0"
+
+[features]
+default = ["rand"]
+# Enables the rand module. This flag must be off on deterministic
+# platforms such as CosmWasm.
+rand = ["dep:rand"]
+serde = []
+
+# Wasm-specific features for easier configuration
+wasm-web = ["rand", "getrandom/js", "libsecp256k1/static-context"]
+wasm-deterministic = ["getrandom/custom"]
