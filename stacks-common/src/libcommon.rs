@@ -18,7 +18,9 @@ extern crate stacks_codec;
 // Re-export stacks_codec macros at the crate root so downstream crates
 // can continue to import them as `stacks_common::impl_byte_array_message_codec`, etc.
 pub use stacks_codec::{
-    impl_byte_array_message_codec, impl_stacks_message_codec_for_int, BITVEC_LEN,
+    impl_array_hexstring_fmt, impl_array_newtype, impl_byte_array_message_codec,
+    impl_byte_array_newtype, impl_byte_array_serde, impl_index_newtype,
+    impl_stacks_message_codec_for_int, BITVEC_LEN,
 };
 
 #[cfg(all(unix, feature = "ctrlc-handler"))]
