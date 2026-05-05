@@ -52,13 +52,10 @@ pub mod indexer;
 #[cfg(test)]
 pub mod tests;
 
-pub struct Txid(pub [u8; 32]);
-impl_array_newtype!(Txid, u8, 32);
-impl_array_hexstring_fmt!(Txid);
-impl_byte_array_newtype!(Txid, u8, 32);
-impl_byte_array_message_codec!(Txid, 32);
-impl_byte_array_serde!(Txid);
-pub const TXID_ENCODED_SIZE: u32 = 32;
+// `Txid` lives in `stacks-codec` (it's a wire-format identifier used in the
+// `StacksTransaction` codec via `tx.txid()`). Re-export so existing call
+// sites (`stacks::burnchains::Txid`) keep working.
+pub use stacks_codec::chainstate::{Txid, TXID_ENCODED_SIZE};
 
 pub const MAGIC_BYTES_LENGTH: usize = 2;
 

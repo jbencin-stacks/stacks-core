@@ -382,32 +382,30 @@ impl Error {
     }
 }
 
-impl Txid {
-    /// A Stacks transaction ID is a sha512/256 hash (not a double-sha256 hash)
-    pub fn from_stacks_tx(txdata: &[u8]) -> Txid {
-        let h = Sha512Trunc256Sum::from_data(txdata);
-        let mut bytes = [0u8; 32];
-        bytes.copy_from_slice(h.as_bytes());
-        Txid(bytes)
-    }
+// `Txid::from_stacks_tx` and `Txid::from_sighash_bytes` (pure, sha512/256-based)
+// moved with the type to `stacks-codec`.
+//
+// `from_bitcoin_tx_hash` / `to_bitcoin_tx_hash` need `Sha256dHash` from
+// `stacks-common::deps_common::bitcoin`, which `stacks-codec` doesn't pull in.
+// Bring this trait into scope to call them.
+pub trait TxidBitcoinExt {
+    fn from_bitcoin_tx_hash(tx_hash: &Sha256dHash) -> Txid;
+    fn to_bitcoin_tx_hash(txid: &Txid) -> Sha256dHash;
+}
 
-    /// A sighash is calculated the same way as a txid
-    pub fn from_sighash_bytes(txdata: &[u8]) -> Txid {
-        Txid::from_stacks_tx(txdata)
-    }
-
+impl TxidBitcoinExt for Txid {
     /// Create a [`Txid`] from the tx hash bytes used in bitcoin.
     /// This just reverses the inner bytes of the input.
-    pub fn from_bitcoin_tx_hash(tx_hash: &Sha256dHash) -> Txid {
+    fn from_bitcoin_tx_hash(tx_hash: &Sha256dHash) -> Txid {
         let mut txid_bytes = tx_hash.0;
         txid_bytes.reverse();
-        Self(txid_bytes)
+        Txid(txid_bytes)
     }
 
     /// Create a [`Sha256dHash`] from a [`Txid`]
     /// This assumes the inner bytes are stored in "big-endian" (following the hex bitcoin string),
     /// so just reverse them to properly create a tx hash.
-    pub fn to_bitcoin_tx_hash(txid: &Txid) -> Sha256dHash {
+    fn to_bitcoin_tx_hash(txid: &Txid) -> Sha256dHash {
         let mut txid_bytes = txid.0;
         txid_bytes.reverse();
         Sha256dHash(txid_bytes)

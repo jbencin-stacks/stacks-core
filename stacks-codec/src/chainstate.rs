@@ -20,6 +20,31 @@ use crate::hash::{Hash160, Sha512Trunc256Sum};
 use crate::Error as CodecError;
 use crate::StacksMessageCodec;
 
+pub struct Txid(pub [u8; 32]);
+crate::impl_array_newtype!(Txid, u8, 32);
+crate::impl_array_hexstring_fmt!(Txid);
+crate::impl_byte_array_newtype!(Txid, u8, 32);
+crate::impl_byte_array_message_codec!(Txid, 32);
+crate::impl_byte_array_serde!(Txid);
+#[cfg(feature = "rusqlite")]
+crate::impl_byte_array_rusqlite_only!(Txid);
+pub const TXID_ENCODED_SIZE: u32 = 32;
+
+impl Txid {
+    /// A Stacks transaction ID is a sha512/256 hash (not a double-sha256 hash)
+    pub fn from_stacks_tx(txdata: &[u8]) -> Txid {
+        let h = Sha512Trunc256Sum::from_data(txdata);
+        let mut bytes = [0u8; 32];
+        bytes.copy_from_slice(h.as_bytes());
+        Txid(bytes)
+    }
+
+    /// A sighash is calculated the same way as a txid
+    pub fn from_sighash_bytes(txdata: &[u8]) -> Txid {
+        Txid::from_stacks_tx(txdata)
+    }
+}
+
 pub struct BlockHeaderHash(pub [u8; 32]);
 crate::impl_array_newtype!(BlockHeaderHash, u8, 32);
 crate::impl_array_hexstring_fmt!(BlockHeaderHash);

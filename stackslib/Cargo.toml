@@ -31,6 +31,7 @@ prometheus = { version = "0.9", optional = true }
 slog = { version = "2.5.2", features = [ "max_level_trace" ] }
 chrono = { version = "0.4.19", optional = true }
 clarity = { path = "../clarity" }
+stacks-codec = { path = "../stacks-codec", features = ["rusqlite"] }
 stacks-common = { path = "../stacks-common" }
 pox-locking = { path = "../pox-locking" }
 libstackerdb = { path = "../libstackerdb" }

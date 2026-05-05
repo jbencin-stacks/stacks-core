@@ -22,6 +22,7 @@ use clarity::vm::types::PrincipalData;
 use libsigner::v0::messages::{BlockResponse, RejectReason};
 use stacks::burnchains::Txid;
 use stacks::chainstate::burn::db::sortdb::SortitionDB;
+use stacks::chainstate::stacks::TxidBitcoinExt;
 use stacks::chainstate::burn::operations::LeaderBlockCommitOp;
 use stacks::chainstate::nakamoto::NakamotoChainState;
 use stacks::chainstate::stacks::db::{StacksBlockHeaderTypes, StacksChainState, StacksHeaderInfo};

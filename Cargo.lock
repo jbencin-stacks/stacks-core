@@ -4582,6 +4582,7 @@ dependencies = [
  "sha2 0.10.8",
  "siphasher",
  "slog",
+ "stacks-codec",
  "stacks-common 0.0.1",
  "stdext",
  "stx-genesis",

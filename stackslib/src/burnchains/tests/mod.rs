@@ -45,8 +45,21 @@ use crate::util_lib::db::*;
 // same SPV header timestamps regardless of when they are instantiated.
 pub const BURNCHAIN_TEST_BLOCK_TIME: u64 = 1629739098;
 
-impl Txid {
-    pub fn from_test_data(
+// Test helper that depends on stacks-common types (`DoubleSha256`,
+// `BurnchainHeaderHash`); kept in stackslib as an ext trait since
+// `Txid` itself is now in `stacks-codec`. Bring this trait into scope at
+// call sites (`use stacks::burnchains::tests::TxidTestExt;`).
+pub trait TxidTestExt {
+    fn from_test_data(
+        block_height: u64,
+        vtxindex: u32,
+        burn_header_hash: &BurnchainHeaderHash,
+        noise: u64,
+    ) -> Txid;
+}
+
+impl TxidTestExt for Txid {
+    fn from_test_data(
         block_height: u64,
         vtxindex: u32,
         burn_header_hash: &BurnchainHeaderHash,

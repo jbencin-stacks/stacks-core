@@ -6855,6 +6855,7 @@ pub mod test {
     use stacks_common::util::retry::*;
 
     use super::*;
+    use crate::burnchains::tests::TxidTestExt;
     use crate::burnchains::*;
     use crate::chainstate::stacks::boot::test::eval_at_tip;
     use crate::chainstate::stacks::db::test::*;

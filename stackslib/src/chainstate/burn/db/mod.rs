@@ -34,7 +34,10 @@ pub mod sortdb;
 
 pub type DBConn = Connection;
 
-impl_byte_array_from_column!(Txid);
+// `Txid`'s rusqlite `FromSql`/`ToSql` impls live in stacks-codec under its
+// `rusqlite` feature; only the (locally-defined) `FromColumn` impl needs
+// generating here.
+impl_byte_array_from_column_only!(Txid);
 impl_byte_array_from_column_only!(ConsensusHash);
 impl_byte_array_from_column_only!(Hash160);
 impl_byte_array_from_column_only!(BlockHeaderHash);
