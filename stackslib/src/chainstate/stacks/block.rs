@@ -28,6 +28,8 @@ use stacks_common::types::chainstate::{
 use stacks_common::util::hash::{Hash160PubKeyExt, MerkleTree, Sha512Trunc256Sum};
 use stacks_common::util::retry::BoundReader;
 use stacks_common::util::secp256k1::MessageSignature;
+#[cfg(not(any(test, feature = "testing")))]
+use stacks_common::util::secp256k1::MessageSignatureSecpExt;
 use stacks_common::util::vrf::*;
 
 use crate::burnchains::PrivateKey;

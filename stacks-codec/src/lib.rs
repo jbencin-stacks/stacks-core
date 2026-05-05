@@ -23,6 +23,7 @@ pub mod macros;
 pub mod hash;
 pub mod hex;
 pub mod pair;
+pub mod signatures;
 pub use hex::{HexDeser, HexError};
 
 #[derive(Debug)]

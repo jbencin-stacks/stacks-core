@@ -26,7 +26,7 @@ use crate::codec::{read_next, write_next, Error as CodecError, StacksMessageCode
 use crate::consts::{FIRST_BURNCHAIN_CONSENSUS_HASH, FIRST_STACKS_BLOCK_HASH};
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::util::hash::{Hash160, Sha512Trunc256Sum, HASH160_ENCODED_SIZE};
-use crate::util::secp256k1::{MessageSignature, Secp256k1PrivateKey, Secp256k1PublicKey};
+use crate::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 use crate::util::vrf::{VRFProof, VRF_PROOF_ENCODED_SIZE};
 
 pub type StacksPublicKey = Secp256k1PublicKey;
@@ -443,7 +443,8 @@ impl_byte_array_message_codec!(ConsensusHash, 20);
 impl_byte_array_message_codec!(BurnchainHeaderHash, 32);
 impl_byte_array_message_codec!(BlockHeaderHash, 32);
 impl_byte_array_message_codec!(StacksBlockId, 32);
-impl_byte_array_message_codec!(MessageSignature, 65);
+// Codec impl for `MessageSignature` lives with its type definition in
+// `stacks-codec`.
 
 impl BlockHeaderHash {
     pub fn to_hash160(&self) -> Hash160 {

@@ -21,7 +21,6 @@ use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, ConsensusHash, SortitionId, StacksBlockId, TrieHash,
 };
-use crate::util::secp256k1::MessageSignature;
 use crate::util::vrf::VRFProof;
 
 pub const NO_PARAMS: &[&dyn ToSql] = &[];
@@ -58,6 +57,7 @@ impl_byte_array_rusqlite_only!(VRFSeed);
 impl_byte_array_rusqlite_only!(BurnchainHeaderHash);
 impl_byte_array_rusqlite_only!(VRFProof);
 impl_byte_array_rusqlite_only!(TrieHash);
-impl_byte_array_rusqlite_only!(MessageSignature);
+// rusqlite impl for `MessageSignature` lives in stacks-codec under its
+// `rusqlite` feature.
 impl_byte_array_rusqlite_only!(SortitionId);
 impl_byte_array_rusqlite_only!(StacksBlockId);

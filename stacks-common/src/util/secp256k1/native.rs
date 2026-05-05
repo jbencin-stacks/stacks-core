@@ -34,6 +34,15 @@ use crate::util::hash::{hex_bytes, to_hex, Sha256Sum};
 // per-thread Secp256k1 context
 thread_local!(static _secp256k1: Secp256k1<secp256k1::All> = Secp256k1::new());
 
+/// Conversion between `MessageSignature` and the native `secp256k1` crate's
+/// `RecoverableSignature`. Can't be inherent on `MessageSignature` because
+/// the type lives in `stacks-codec` (which has no `secp256k1` dep), and the
+/// signature here is target-specific (differs from the wasm variant).
+pub trait MessageSignatureSecpExt {
+    fn from_secp256k1_recoverable(sig: &LibSecp256k1RecoverableSignature) -> MessageSignature;
+    fn to_secp256k1_recoverable(&self) -> Option<LibSecp256k1RecoverableSignature>;
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Hash)]
 pub struct Secp256k1PublicKey {
     // serde is broken for secp256k1, so do it ourselves
@@ -56,25 +65,8 @@ pub struct Secp256k1PrivateKey {
     compress_public: bool,
 }
 
-impl MessageSignature {
-    pub fn empty() -> MessageSignature {
-        // NOTE: this cannot be a valid signature
-        MessageSignature([0u8; 65])
-    }
-
-    #[cfg(any(test, feature = "testing"))]
-    // test method for generating place-holder data
-    pub fn from_raw(sig: &[u8]) -> MessageSignature {
-        let mut buf = [0u8; 65];
-        if sig.len() < 65 {
-            buf.copy_from_slice(sig);
-        } else {
-            buf.copy_from_slice(&sig[..65]);
-        }
-        MessageSignature(buf)
-    }
-
-    pub fn from_secp256k1_recoverable(sig: &LibSecp256k1RecoverableSignature) -> MessageSignature {
+impl MessageSignatureSecpExt for MessageSignature {
+    fn from_secp256k1_recoverable(sig: &LibSecp256k1RecoverableSignature) -> MessageSignature {
         let (recid, bytes) = sig.serialize_compact();
         let mut ret_bytes = [0u8; 65];
         let recovery_id_byte = recid.to_i32() as u8; // recovery ID will be 0, 1, 2, or 3
@@ -83,7 +75,7 @@ impl MessageSignature {
         MessageSignature(ret_bytes)
     }
 
-    pub fn to_secp256k1_recoverable(&self) -> Option<LibSecp256k1RecoverableSignature> {
+    fn to_secp256k1_recoverable(&self) -> Option<LibSecp256k1RecoverableSignature> {
         let recid = match LibSecp256k1RecoveryID::from_i32(self.0[0] as i32) {
             Ok(rid) => rid,
             Err(_) => {
@@ -94,11 +86,6 @@ impl MessageSignature {
         sig_bytes[..64].copy_from_slice(&self.0[1..=64]);
 
         LibSecp256k1RecoverableSignature::from_compact(&sig_bytes, recid).ok()
-    }
-
-    /// Convert from VRS to RSV
-    pub fn to_rsv(&self) -> Vec<u8> {
-        [&self.0[1..], &self.0[0..1]].concat()
     }
 }
 

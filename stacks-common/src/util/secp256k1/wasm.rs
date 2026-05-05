@@ -31,6 +31,19 @@ use crate::util::hash::{hex_bytes, to_hex};
 
 pub const PUBLIC_KEY_SIZE: usize = 33;
 
+/// Conversion between `MessageSignature` and the wasm `libsecp256k1` crate's
+/// `Signature` + `RecoveryId`. Same role as the native variant (defined in
+/// `native.rs`); kept target-specific because the underlying types differ.
+pub trait MessageSignatureSecpExt {
+    fn from_secp256k1_recoverable(
+        sig: &LibSecp256k1Signature,
+        recid: LibSecp256k1RecoveryId,
+    ) -> MessageSignature;
+    fn to_secp256k1_recoverable(
+        &self,
+    ) -> Option<(LibSecp256k1Signature, LibSecp256k1RecoveryId)>;
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Secp256k1PublicKey {
     // serde is broken for secp256k1, so do it ourselves
@@ -257,25 +270,8 @@ fn secp256k1_privkey_deserialize<'de, D: serde::Deserializer<'de>>(
     LibSecp256k1PrivateKey::parse_slice(&key_bytes[..]).map_err(de_Error::custom)
 }
 
-impl MessageSignature {
-    pub fn empty() -> MessageSignature {
-        // NOTE: this cannot be a valid signature
-        MessageSignature([0u8; 65])
-    }
-
-    #[cfg(test)]
-    // test method for generating place-holder data
-    pub fn from_raw(sig: &Vec<u8>) -> MessageSignature {
-        let mut buf = [0u8; 65];
-        if sig.len() < 65 {
-            buf.copy_from_slice(&sig[..]);
-        } else {
-            buf.copy_from_slice(&sig[..65]);
-        }
-        MessageSignature(buf)
-    }
-
-    pub fn from_secp256k1_recoverable(
+impl MessageSignatureSecpExt for MessageSignature {
+    fn from_secp256k1_recoverable(
         sig: &LibSecp256k1Signature,
         recid: LibSecp256k1RecoveryId,
     ) -> MessageSignature {
@@ -287,7 +283,7 @@ impl MessageSignature {
         MessageSignature(ret_bytes)
     }
 
-    pub fn to_secp256k1_recoverable(
+    fn to_secp256k1_recoverable(
         &self,
     ) -> Option<(LibSecp256k1Signature, LibSecp256k1RecoveryId)> {
         let recovery_id = match LibSecp256k1RecoveryId::parse(self.0[0]) {
