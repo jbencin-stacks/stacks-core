@@ -1718,7 +1718,7 @@ impl SortitionHandleTx<'_> {
                             debug!("PoX recipient chosen";
                                "recipient" => recipient.to_burnchain_repr(),
                                "block_height" => block_height,
-                               "anchor_stacks_block_hash" => &anchor_block,
+                               "anchor_stacks_block_hash" => %anchor_block,
                             );
                             (recipient, u16::try_from(ix).unwrap())
                         })

@@ -23,7 +23,6 @@ use sha2::{Digest as Sha2Digest, Sha512_256};
 
 use crate::address::Error as AddressError;
 use crate::codec::{read_next, write_next, Error as CodecError, StacksMessageCodec};
-use crate::consts::{FIRST_BURNCHAIN_CONSENSUS_HASH, FIRST_STACKS_BLOCK_HASH};
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::util::hash::{Hash160, Sha512Trunc256Sum, HASH160_ENCODED_SIZE};
 use crate::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
@@ -91,23 +90,13 @@ impl_array_newtype!(BurnchainHeaderHash, u8, 32);
 impl_array_hexstring_fmt!(BurnchainHeaderHash);
 impl_byte_array_newtype!(BurnchainHeaderHash, u8, 32);
 
-pub struct BlockHeaderHash(pub [u8; 32]);
-impl_array_newtype!(BlockHeaderHash, u8, 32);
-impl_array_hexstring_fmt!(BlockHeaderHash);
-impl_byte_array_newtype!(BlockHeaderHash, u8, 32);
-impl_byte_array_serde!(BlockHeaderHash);
-pub const BLOCK_HEADER_HASH_ENCODED_SIZE: usize = 32;
-
-impl slog::Value for BlockHeaderHash {
-    fn serialize(
-        &self,
-        _record: &slog::Record,
-        key: slog::Key,
-        serializer: &mut dyn slog::Serializer,
-    ) -> slog::Result {
-        serializer.emit_arguments(key, &format_args!("{self}"))
-    }
-}
+// `BlockHeaderHash` lives in `stacks-codec` (it appears in the
+// `StacksTransaction` type tree via `StacksMicroblockHeader.prev_block`).
+// Re-export at the bottom of this file so existing call sites keep working.
+//
+// The `slog::Value for BlockHeaderHash` impl was dropped — no consumer in
+// the workspace uses BlockHeaderHash without a `%` (Display) or `?` (Debug)
+// sigil in slog macros.
 
 /// Identifier used to identify "sortitions" in the
 ///  SortitionDB. A sortition is the collection of
@@ -345,11 +334,9 @@ pub struct StacksWorkScore {
     pub work: u64, // in Stacks, "work" == the length of the fork
 }
 
-pub struct StacksBlockId(pub [u8; 32]);
-impl_array_newtype!(StacksBlockId, u8, 32);
-impl_array_hexstring_fmt!(StacksBlockId);
-impl_byte_array_newtype!(StacksBlockId, u8, 32);
-impl_byte_array_serde!(StacksBlockId);
+// `StacksBlockId` lives in `stacks-codec` (it appears in the
+// `StacksTransaction` type tree via `TenureChangePayload.previous_tenure_end`
+// and `StacksMicroblockHeader`). Re-export at the bottom of this file.
 
 /// A newtype for `StacksBlockId` that indicates a block is a tenure-change
 /// block. This helps to explicitly differentiate tenure-change blocks in the
@@ -361,31 +348,10 @@ impl From<StacksBlockId> for TenureBlockId {
     }
 }
 
-pub struct ConsensusHash(pub [u8; 20]);
-impl_array_newtype!(ConsensusHash, u8, 20);
-impl_array_hexstring_fmt!(ConsensusHash);
-impl_byte_array_newtype!(ConsensusHash, u8, 20);
-impl_byte_array_serde!(ConsensusHash);
-
-pub const CONSENSUS_HASH_ENCODED_SIZE: u32 = 20;
-
-impl StacksBlockId {
-    pub fn new(
-        sortition_consensus_hash: &ConsensusHash,
-        block_hash: &BlockHeaderHash,
-    ) -> StacksBlockId {
-        let mut hasher = Sha512_256::new();
-        hasher.update(block_hash);
-        hasher.update(sortition_consensus_hash);
-
-        let h = Sha512Trunc256Sum::from_hasher(hasher);
-        StacksBlockId(h.0)
-    }
-
-    pub fn first_mined() -> StacksBlockId {
-        StacksBlockId::new(&FIRST_BURNCHAIN_CONSENSUS_HASH, &FIRST_STACKS_BLOCK_HASH)
-    }
-}
+// `ConsensusHash` lives in `stacks-codec` (it appears in the
+// `StacksTransaction` type tree via `TenureChangePayload`). Re-export at
+// the bottom of this file. Inherent methods on `StacksBlockId` (incl.
+// `first_mined`) moved with the type.
 
 impl StacksWorkScore {
     /// Stacks work score for the first-mined block
@@ -435,36 +401,23 @@ impl StacksMessageCodec for StacksWorkScore {
 }
 
 impl_byte_array_message_codec!(TrieHash, TRIEHASH_ENCODED_SIZE as u32);
-// Codec impls for `Hash160` and `Sha512Trunc256Sum` live with their type
-// definitions in `stacks-codec` (orphan rule: both trait and type are now
-// outside this crate).
+// Codec impls for `Hash160`, `Sha512Trunc256Sum`, `BlockHeaderHash`,
+// `StacksBlockId`, `ConsensusHash`, and `MessageSignature` live with their
+// type definitions in `stacks-codec` (orphan rule: both trait and type are
+// now outside this crate).
 
-impl_byte_array_message_codec!(ConsensusHash, 20);
 impl_byte_array_message_codec!(BurnchainHeaderHash, 32);
-impl_byte_array_message_codec!(BlockHeaderHash, 32);
-impl_byte_array_message_codec!(StacksBlockId, 32);
-// Codec impl for `MessageSignature` lives with its type definition in
-// `stacks-codec`.
 
-impl BlockHeaderHash {
-    pub fn to_hash160(&self) -> Hash160 {
-        Hash160::from_sha256(&self.0)
-    }
+// `BlockHeaderHash`'s inherent methods (`to_hash160`, `from_serializer`,
+// `from_serialized_header`) moved with the type to `stacks-codec`.
 
-    pub fn from_serializer<C: StacksMessageCodec>(
-        serializer: &C,
-    ) -> Result<BlockHeaderHash, CodecError> {
-        let mut hasher = Sha512_256::new();
-        serializer.consensus_serialize(&mut hasher)?;
-        let hash = Sha512Trunc256Sum::from_hasher(hasher);
-        Ok(BlockHeaderHash(hash.0))
-    }
-
-    pub fn from_serialized_header(buf: &[u8]) -> BlockHeaderHash {
-        let h = Sha512Trunc256Sum::from_data(buf);
-        BlockHeaderHash(h.to_bytes())
-    }
-}
+// Re-exports for the chainstate types now living in `stacks-codec`. Existing
+// call sites (`stacks_common::types::chainstate::{BlockHeaderHash, ...}`)
+// keep working unchanged.
+pub use stacks_codec::chainstate::{
+    BlockHeaderHash, ConsensusHash, StacksBlockId, BLOCK_HEADER_HASH_ENCODED_SIZE,
+    CONSENSUS_HASH_ENCODED_SIZE,
+};
 
 impl BurnchainHeaderHash {
     /// Instantiate a burnchain block hash from a Bitcoin block header

@@ -19,7 +19,7 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, 
 use super::chainstate::{StacksAddress, VRFSeed};
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::types::chainstate::{
-    BlockHeaderHash, BurnchainHeaderHash, ConsensusHash, SortitionId, StacksBlockId, TrieHash,
+    BurnchainHeaderHash, SortitionId, TrieHash,
 };
 use crate::util::vrf::VRFProof;
 
@@ -49,15 +49,12 @@ impl ToSql for StacksAddress {
 
 // Implement rusqlite traits for a bunch of structs that used to be defined
 //  in the chainstate code
-impl_byte_array_rusqlite_only!(ConsensusHash);
-// rusqlite impls for `Hash160` and `Sha512Trunc256Sum` live in stacks-codec
-// under its `rusqlite` feature (orphan rule: types now defined there).
-impl_byte_array_rusqlite_only!(BlockHeaderHash);
+// rusqlite impls for `Hash160`, `Sha512Trunc256Sum`, `BlockHeaderHash`,
+// `StacksBlockId`, `ConsensusHash`, and `MessageSignature` live in
+// stacks-codec under its `rusqlite` feature (orphan rule: types now
+// defined there).
 impl_byte_array_rusqlite_only!(VRFSeed);
 impl_byte_array_rusqlite_only!(BurnchainHeaderHash);
 impl_byte_array_rusqlite_only!(VRFProof);
 impl_byte_array_rusqlite_only!(TrieHash);
-// rusqlite impl for `MessageSignature` lives in stacks-codec under its
-// `rusqlite` feature.
 impl_byte_array_rusqlite_only!(SortitionId);
-impl_byte_array_rusqlite_only!(StacksBlockId);
