@@ -17,7 +17,7 @@
 use std::{fmt, str};
 
 use crate::address::Error;
-use crate::util::hash::{DoubleSha256, DoubleSha256Uint256Ext};
+use crate::util::hash::DoubleSha256;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
