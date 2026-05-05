@@ -24,6 +24,7 @@ pub mod chainstate;
 pub mod hash;
 pub mod hex;
 pub mod pair;
+pub mod retry;
 pub mod signatures;
 pub use hex::{HexDeser, HexError};
 

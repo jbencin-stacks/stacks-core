@@ -30,7 +30,7 @@ use stacks_common::consts::{FIRST_BURNCHAIN_CONSENSUS_HASH, FIRST_STACKS_BLOCK_H
 use stacks_common::types::chainstate::{
     BurnchainHeaderHash, StacksAddress, StacksBlockId, StacksPrivateKey, StacksPublicKey,
 };
-use stacks_common::types::{Address, StacksEpoch, StacksPublicKeyBuffer};
+use stacks_common::types::{Address, StacksEpoch, StacksPublicKeyBuffer, StacksPublicKeyBufferExt};
 use stacks_common::util::hash::{to_hex, Hash160};
 
 use crate::burnchains::tests::TestMiner;

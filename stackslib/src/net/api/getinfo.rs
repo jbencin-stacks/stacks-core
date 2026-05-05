@@ -19,7 +19,7 @@ use stacks_common::types::chainstate::{
     BlockHeaderHash, ConsensusHash, StacksBlockId, StacksPublicKey,
 };
 use stacks_common::types::net::PeerHost;
-use stacks_common::types::StacksPublicKeyBuffer;
+use stacks_common::types::{StacksPublicKeyBuffer, StacksPublicKeyBufferExt};
 use stacks_common::util::hash::{Hash160, Hash160PubKeyExt, Sha256Sum};
 
 use crate::burnchains::Txid;

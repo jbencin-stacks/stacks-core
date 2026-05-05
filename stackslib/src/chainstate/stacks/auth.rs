@@ -21,7 +21,7 @@ use stacks_common::codec::{
     read_next, write_next, Error as codec_error, StacksMessageCodec, MAX_MESSAGE_LEN,
 };
 use stacks_common::types::chainstate::StacksAddress;
-use stacks_common::types::{StacksEpochId, StacksPublicKeyBuffer};
+use stacks_common::types::{StacksEpochId, StacksPublicKeyBuffer, StacksPublicKeyBufferExt};
 use stacks_common::util::hash::Hash160;
 use stacks_common::util::retry::BoundReader;
 use stacks_common::util::secp256k1::{MessageSignature, MESSAGE_SIGNATURE_ENCODED_SIZE};
