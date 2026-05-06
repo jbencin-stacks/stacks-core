@@ -26,6 +26,7 @@ pub mod hex;
 pub mod pair;
 pub mod retry;
 pub mod signatures;
+pub mod strings;
 pub use hex::{HexDeser, HexError};
 
 #[derive(Debug)]

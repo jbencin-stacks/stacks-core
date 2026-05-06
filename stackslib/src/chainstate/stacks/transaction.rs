@@ -29,6 +29,7 @@ use crate::burnchains::Txid;
 use crate::chainstate::stacks::{TransactionPayloadID, *};
 use crate::net::Error as net_error;
 use crate::util_lib::boot::boot_code_addr;
+use crate::util_lib::strings::StacksStringClarityExt;
 
 impl StacksMessageCodec for TransactionContractCall {
     fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
@@ -49,7 +50,7 @@ impl StacksMessageCodec for TransactionContractCall {
         }?;
 
         // function name must be valid Clarity variable
-        if !StacksString::from(function_name.clone()).is_clarity_variable() {
+        if !StacksString::from_clarity_name(function_name.clone()).is_clarity_variable() {
             warn!("Invalid function name -- not a clarity variable");
             return Err(codec_error::DeserializeError(
                 "Failed to parse transaction: invalid function name -- not a Clarity variable"

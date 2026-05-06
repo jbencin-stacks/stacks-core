@@ -17,7 +17,7 @@
 use std::borrow::Borrow;
 use std::fmt;
 use std::io::{Read, Write};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 use clarity::vm::errors::ClarityTypeError;
 use clarity::vm::representations::{
@@ -25,10 +25,13 @@ use clarity::vm::representations::{
 };
 use lazy_static::lazy_static;
 use regex::Regex;
+// `StacksString` lives in `stacks-codec` (it's used by
+// `TransactionSmartContract.code_body`). Re-export so existing call sites
+// (`stackslib::util_lib::strings::StacksString`) keep working.
+pub use stacks_codec::strings::StacksString;
 use stacks_common::codec::{
-    read_next, write_next, Error as codec_error, StacksMessageCodec, MAX_MESSAGE_LEN,
+    read_next, write_next, Error as codec_error, StacksMessageCodec,
 };
-use stacks_common::util::retry::BoundReader;
 use url;
 
 lazy_static! {
@@ -43,11 +46,6 @@ guarded_string!(
     ClarityTypeError,
     ClarityTypeError::InvalidUrlString
 );
-
-/// printable-ASCII-only string, but encodable.
-/// Note that it cannot be longer than ARRAY_MAX_LEN (4.1 billion bytes)
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
-pub struct StacksString(Vec<u8>);
 
 pub struct VecDisplay<'a, T: fmt::Display>(pub &'a [T]);
 
@@ -65,61 +63,9 @@ impl<T: fmt::Display> fmt::Display for VecDisplay<'_, T> {
     }
 }
 
-impl fmt::Display for StacksString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(String::from_utf8_lossy(self).into_owned().as_str())
-    }
-}
-
-impl fmt::Debug for StacksString {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(String::from_utf8_lossy(self).into_owned().as_str())
-    }
-}
-
-impl Deref for StacksString {
-    type Target = Vec<u8>;
-    fn deref(&self) -> &Vec<u8> {
-        &self.0
-    }
-}
-
-impl DerefMut for StacksString {
-    fn deref_mut(&mut self) -> &mut Vec<u8> {
-        &mut self.0
-    }
-}
-
-impl StacksMessageCodec for StacksString {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
-        write_next(fd, &self.0)
-    }
-
-    fn consensus_deserialize<R: Read>(fd: &mut R) -> Result<StacksString, codec_error> {
-        let bytes: Vec<u8> = {
-            let mut bound_read = BoundReader::from_reader(fd, MAX_MESSAGE_LEN as u64);
-            read_next(&mut bound_read)
-        }?;
-
-        // must encode a valid string
-        let s = String::from_utf8(bytes.clone()).map_err(|_e| {
-            warn!("Invalid StacksString -- could not build from utf8");
-            codec_error::DeserializeError(
-                "Invalid Stacks string: could not build from utf8".to_string(),
-            )
-        })?;
-
-        if !StacksString::is_valid_string(&s) {
-            // non-printable ASCII or not ASCII
-            warn!("Invalid StacksString -- non-printable ASCII or non-ASCII");
-            return Err(codec_error::DeserializeError(
-                "Invalid Stacks string: non-printable or non-ASCII string".to_string(),
-            ));
-        }
-
-        Ok(StacksString(bytes))
-    }
-}
+// `StacksString`'s `Display` / `Debug` / `Deref` / `DerefMut` / `StacksMessageCodec`
+// impls and pure methods (`is_valid_string`, `is_printable`, `from_string`,
+// `from_str`, `to_string`) live with the type in `stacks-codec`.
 
 impl StacksMessageCodec for UrlString {
     fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
@@ -172,62 +118,31 @@ impl StacksMessageCodec for UrlString {
     }
 }
 
-impl From<ClarityName> for StacksString {
-    fn from(clarity_name: ClarityName) -> StacksString {
-        // .unwrap() is safe since StacksString is less strict
-        StacksString::from_str(&clarity_name).unwrap()
-    }
+/// Convenience conversions and Clarity-specific predicates that depend on
+/// `clarity::vm::representations::{ClarityName, ContractName}`. Bring this
+/// trait into scope to call `StacksString::from(clarity_name)` /
+/// `.is_clarity_variable()`. The conversions can't live with the type in
+/// `stacks-codec` (orphan rule + we don't want stacks-codec to depend on
+/// clarity).
+pub trait StacksStringClarityExt {
+    fn from_clarity_name(name: ClarityName) -> StacksString;
+    fn from_contract_name(name: ContractName) -> StacksString;
+    fn is_clarity_variable(&self) -> bool;
 }
 
-impl From<ContractName> for StacksString {
-    fn from(contract_name: ContractName) -> StacksString {
+impl StacksStringClarityExt for StacksString {
+    fn from_clarity_name(name: ClarityName) -> StacksString {
         // .unwrap() is safe since StacksString is less strict
-        StacksString::from_str(&contract_name).unwrap()
-    }
-}
-
-impl StacksString {
-    /// Is the given string a valid Clarity string?
-    pub fn is_valid_string(s: &String) -> bool {
-        s.is_ascii() && StacksString::is_printable(s)
+        StacksString::from_str(&name).unwrap()
     }
 
-    pub fn is_printable(s: &String) -> bool {
-        if !s.is_ascii() {
-            return false;
-        }
-        // all characters must be ASCII "printable" characters, excluding "delete".
-        // This is 0x20 through 0x7e, inclusive, as well as '\t' and '\n'
-        // TODO: DRY up with vm::representations
-        for c in s.as_bytes().iter() {
-            if (*c < 0x20 && *c != b'\t' && *c != b'\n') || *c > 0x7e {
-                return false;
-            }
-        }
-        true
+    fn from_contract_name(name: ContractName) -> StacksString {
+        // .unwrap() is safe since StacksString is less strict
+        StacksString::from_str(&name).unwrap()
     }
 
-    pub fn is_clarity_variable(&self) -> bool {
+    fn is_clarity_variable(&self) -> bool {
         ClarityName::try_from(self.to_string()).is_ok()
-    }
-
-    pub fn from_string(s: &String) -> Option<StacksString> {
-        if !StacksString::is_valid_string(s) {
-            return None;
-        }
-        Some(StacksString(s.as_bytes().to_vec()))
-    }
-
-    pub fn from_str(s: &str) -> Option<StacksString> {
-        if !StacksString::is_valid_string(&String::from(s)) {
-            return None;
-        }
-        Some(StacksString(s.as_bytes().to_vec()))
-    }
-
-    pub fn to_string(&self) -> String {
-        // guaranteed to always succeed because the string is ASCII
-        String::from_utf8(self.0.clone()).unwrap()
     }
 }
 
