@@ -19,7 +19,6 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, 
 use super::chainstate::{StacksAddress, VRFSeed};
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::types::chainstate::{BurnchainHeaderHash, SortitionId, TrieHash};
-use crate::util::vrf::VRFProof;
 
 pub const NO_PARAMS: &[&dyn ToSql] = &[];
 
@@ -53,6 +52,7 @@ impl ToSql for StacksAddress {
 // defined there).
 impl_byte_array_rusqlite_only!(VRFSeed);
 impl_byte_array_rusqlite_only!(BurnchainHeaderHash);
-impl_byte_array_rusqlite_only!(VRFProof);
+// rusqlite impls for `VRFProof` live in stacks-codec under its `rusqlite`
+// feature.
 impl_byte_array_rusqlite_only!(TrieHash);
 impl_byte_array_rusqlite_only!(SortitionId);

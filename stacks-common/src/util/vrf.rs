@@ -210,164 +210,11 @@ impl error::Error for Error {
 
 pub const SUITE: u8 = 0x03;
 
-#[derive(Clone, PartialEq, Eq)]
-pub struct VRFProof {
-    // force private so we don't accidentally expose
-    // an invalid c point
-    // Gamma: RistrettoPoint,
-    Gamma: EdwardsPoint,
-    c: ed25519_Scalar,
-    s: ed25519_Scalar,
-}
-
-impl Debug for VRFProof {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", &self.to_hex())
-    }
-}
-
-impl Hash for VRFProof {
-    fn hash<H: Hasher>(&self, h: &mut H) {
-        let bytes = self.to_bytes();
-        bytes.hash(h);
-    }
-}
-
-pub const VRF_PROOF_ENCODED_SIZE: u32 = 80;
-
-impl VRFProof {
-    pub fn Gamma(&self) -> &EdwardsPoint {
-        &self.Gamma
-    }
-
-    pub fn s(&self) -> &ed25519_Scalar {
-        &self.s
-    }
-
-    pub fn c(&self) -> &ed25519_Scalar {
-        &self.c
-    }
-
-    #[allow(clippy::needless_range_loop)]
-    pub fn check_c(c: &ed25519_Scalar) -> bool {
-        let c_bytes = c.to_bytes();
-
-        // upper 16 bytes of c must be 0's
-        for c_byte in c_bytes[16..32].iter() {
-            if *c_byte != 0 {
-                return false;
-            }
-        }
-        true
-    }
-
-    pub fn empty() -> VRFProof {
-        // can't be all 0's, since an all-0 string decodes to a low-order point
-        VRFProof::from_slice(&[1u8; 80]).unwrap()
-    }
-
-    pub fn new(
-        Gamma: EdwardsPoint,
-        c: ed25519_Scalar,
-        s: ed25519_Scalar,
-    ) -> Result<VRFProof, Error> {
-        if !VRFProof::check_c(&c) {
-            return Err(Error::InvalidDataError);
-        }
-
-        Ok(VRFProof { Gamma, c, s })
-    }
-
-    pub fn from_slice(bytes: &[u8]) -> Option<VRFProof> {
-        match bytes.len() {
-            80 => {
-                // format:
-                // 0                            32         48                         80
-                // |----------------------------|----------|---------------------------|
-                //      Gamma point               c scalar   s scalar
-                let gamma_opt = CompressedEdwardsY::from_slice(&bytes[0..32])
-                    .ok()
-                    .and_then(|y| y.decompress());
-                if gamma_opt.is_none() {
-                    test_debug!("Invalid Gamma");
-                    return None;
-                }
-                let gamma = gamma_opt.unwrap();
-                if gamma.is_small_order() {
-                    test_debug!("Invalid Gamma -- small order");
-                    return None;
-                }
-
-                let mut c_buf = [0u8; 32];
-                let mut s_buf = [0u8; 32];
-
-                c_buf[..16].copy_from_slice(&bytes[32..(16 + 32)]);
-                s_buf[..32].copy_from_slice(&bytes[48..(32 + 48)]);
-                let c: Option<ed25519_Scalar> = ed25519_Scalar::from_canonical_bytes(c_buf).into();
-                let s: Option<ed25519_Scalar> = ed25519_Scalar::from_canonical_bytes(s_buf).into();
-
-                Some(VRFProof {
-                    Gamma: gamma,
-                    c: c?,
-                    s: s?,
-                })
-            }
-            _ => None,
-        }
-    }
-
-    pub fn from_bytes(bytes: &[u8]) -> Option<VRFProof> {
-        VRFProof::from_slice(bytes)
-    }
-
-    pub fn from_hex(hex_str: &str) -> Option<VRFProof> {
-        match hex_bytes(hex_str) {
-            Ok(b) => VRFProof::from_slice(&b[..]),
-            Err(_) => None,
-        }
-    }
-
-    pub fn to_bytes(&self) -> [u8; 80] {
-        let mut c_bytes_16 = [0u8; 16];
-        assert!(
-            VRFProof::check_c(&self.c),
-            "FATAL ERROR: somehow constructed an invalid ECVRF proof"
-        );
-
-        let c_bytes = self.c.to_bytes();
-        c_bytes_16[0..16].copy_from_slice(&c_bytes[0..16]);
-
-        let gamma_bytes = self.Gamma.compress().to_bytes();
-        let s_bytes = self.s.to_bytes();
-
-        let mut ret: Vec<u8> = Vec::with_capacity(80);
-        ret.extend_from_slice(&gamma_bytes);
-        ret.extend_from_slice(&c_bytes_16);
-        ret.extend_from_slice(&s_bytes);
-
-        let mut proof_bytes = [0u8; 80];
-        proof_bytes.copy_from_slice(&ret[..]);
-        proof_bytes
-    }
-
-    pub fn to_hex(&self) -> String {
-        to_hex(&self.to_bytes())
-    }
-}
-
-impl serde::Serialize for VRFProof {
-    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        let inst = self.to_hex();
-        s.serialize_str(&inst)
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for VRFProof {
-    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<VRFProof, D::Error> {
-        let inst_str = String::deserialize(d)?;
-        VRFProof::from_hex(&inst_str).ok_or(serde::de::Error::custom(Error::InvalidDataError))
-    }
-}
+// `VRFProof` lives in `stacks-codec` (it appears in
+// `TransactionPayload::Coinbase`). Re-export so existing call sites
+// (`stacks_common::util::vrf::{VRFProof, VRF_PROOF_ENCODED_SIZE}`) keep
+// working.
+pub use stacks_codec::vrf::{VRFProof, VRF_PROOF_ENCODED_SIZE};
 
 pub struct VRF {}
 
@@ -503,11 +350,13 @@ impl VRF {
 
         let s_scalar = &k_scalar + &c_scalar * &x_scalar;
 
-        // NOTE: expect() won't panic because c_scalar is guaranteed to have
-        // its upper 16 bytes as 0
-        VRFProof::new(Gamma_point, c_scalar, s_scalar)
-            .inspect_err(|e| error!("FATAL: upper-16 bytes of proof's C scalar are NOT 0: {e}"))
-            .ok()
+        // NOTE: this won't return None in practice because c_scalar is
+        // guaranteed to have its upper 16 bytes as 0.
+        let proof = VRFProof::new(Gamma_point, c_scalar, s_scalar);
+        if proof.is_none() {
+            error!("FATAL: upper-16 bytes of proof's C scalar are NOT 0");
+        }
+        proof
     }
 
     /// Given a public key, verify that the private key owner that generate the ECVRF proof did so on the given message.

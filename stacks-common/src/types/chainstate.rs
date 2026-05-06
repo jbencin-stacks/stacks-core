@@ -26,7 +26,7 @@ use crate::codec::{read_next, write_next, Error as CodecError, StacksMessageCode
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::util::hash::{Hash160, Sha512Trunc256Sum, HASH160_ENCODED_SIZE};
 use crate::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
-use crate::util::vrf::{VRFProof, VRF_PROOF_ENCODED_SIZE};
+use crate::util::vrf::VRFProof;
 
 pub type StacksPublicKey = Secp256k1PublicKey;
 pub type StacksPrivateKey = Secp256k1PrivateKey;
@@ -368,22 +368,7 @@ impl StacksWorkScore {
     }
 }
 
-impl StacksMessageCodec for VRFProof {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), CodecError> {
-        fd.write_all(&self.to_bytes())
-            .map_err(CodecError::WriteError)
-    }
-
-    fn consensus_deserialize<R: Read>(fd: &mut R) -> Result<VRFProof, CodecError> {
-        let mut bytes = [0u8; VRF_PROOF_ENCODED_SIZE as usize];
-        fd.read_exact(&mut bytes).map_err(CodecError::ReadError)?;
-        let res = VRFProof::from_slice(&bytes).ok_or(CodecError::DeserializeError(
-            "Failed to parse VRF proof".to_string(),
-        ))?;
-
-        Ok(res)
-    }
-}
+// `StacksMessageCodec for VRFProof` lives with the type in `stacks-codec`.
 
 impl StacksMessageCodec for StacksWorkScore {
     fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), CodecError> {
