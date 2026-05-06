@@ -37,11 +37,10 @@ use libsigner::{BlockProposal, SignerEntries, SignerEventTrait};
 use serde::{Deserialize, Serialize};
 use stacks::burnchains::Txid;
 use stacks::chainstate::coordinator::comm::CoordinatorChannels;
-use stacks::chainstate::stacks::TxidBitcoinExt;
 use stacks::chainstate::nakamoto::signer_set::NakamotoSigners;
 use stacks::chainstate::nakamoto::NakamotoBlock;
 use stacks::chainstate::stacks::boot::{NakamotoSignerEntry, SIGNERS_NAME};
-use stacks::chainstate::stacks::StacksPrivateKey;
+use stacks::chainstate::stacks::{StacksPrivateKey, TxidBitcoinExt};
 use stacks::config::{Config as NeonConfig, EventKeyType, EventObserverConfig, InitialBalance};
 use stacks::core::test_util::{
     make_contract_call, make_contract_publish, make_stacks_transfer_serialized,

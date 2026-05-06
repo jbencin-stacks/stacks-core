@@ -34,7 +34,6 @@ use stacks::burnchains::{
     Burnchain, BurnchainParameters, BurnchainStateTransitionOps, Error as burnchain_error,
     PoxConstants, PublicKey, Txid,
 };
-use stacks::chainstate::stacks::TxidBitcoinExt;
 use stacks::chainstate::burn::db::sortdb::SortitionDB;
 use stacks::chainstate::burn::operations::{
     BlockstackOperationType, DelegateStxOp, LeaderBlockCommitOp, LeaderKeyRegisterOp, PreStxOp,
@@ -45,6 +44,7 @@ use stacks::chainstate::burn::Opcodes;
 use stacks::chainstate::coordinator::comm::CoordinatorChannels;
 #[cfg(test)]
 use stacks::chainstate::stacks::address::PoxAddress;
+use stacks::chainstate::stacks::TxidBitcoinExt;
 use stacks::config::BurnchainConfig;
 #[cfg(test)]
 use stacks::config::{

@@ -691,12 +691,9 @@ impl_array_hexstring_fmt!(CoinbasePayload);
 impl_byte_array_newtype!(CoinbasePayload, u8, 32);
 impl_byte_array_serde!(CoinbasePayload);
 
-pub struct TokenTransferMemo(pub [u8; 34]); // same length as it is in stacks v1
-impl_byte_array_message_codec!(TokenTransferMemo, 34);
-impl_array_newtype!(TokenTransferMemo, u8, 34);
-impl_array_hexstring_fmt!(TokenTransferMemo);
-impl_byte_array_newtype!(TokenTransferMemo, u8, 34);
-impl_byte_array_serde!(TokenTransferMemo);
+// `TokenTransferMemo` lives in `stacks-codec` (it's a field of
+// `TransactionPayload::TokenTransfer`).
+pub use stacks_codec::chainstate::TokenTransferMemo;
 
 /// Cause of change in mining tenure
 /// Depending on cause, tenure can be ended or extended

@@ -18,9 +18,7 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, 
 
 use super::chainstate::{StacksAddress, VRFSeed};
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
-use crate::types::chainstate::{
-    BurnchainHeaderHash, SortitionId, TrieHash,
-};
+use crate::types::chainstate::{BurnchainHeaderHash, SortitionId, TrieHash};
 use crate::util::vrf::VRFProof;
 
 pub const NO_PARAMS: &[&dyn ToSql] = &[];

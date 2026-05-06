@@ -17,8 +17,7 @@
 use sha2::{Digest, Sha512_256};
 
 use crate::hash::{Hash160, Sha512Trunc256Sum};
-use crate::Error as CodecError;
-use crate::StacksMessageCodec;
+use crate::{Error as CodecError, StacksMessageCodec};
 
 pub struct Txid(pub [u8; 32]);
 crate::impl_array_newtype!(Txid, u8, 32);
@@ -29,6 +28,15 @@ crate::impl_byte_array_serde!(Txid);
 #[cfg(feature = "rusqlite")]
 crate::impl_byte_array_rusqlite_only!(Txid);
 pub const TXID_ENCODED_SIZE: u32 = 32;
+
+/// Memo blob attached to a `TransactionPayload::TokenTransfer`. Same length
+/// (34 bytes) as in stacks v1.
+pub struct TokenTransferMemo(pub [u8; 34]);
+crate::impl_byte_array_message_codec!(TokenTransferMemo, 34);
+crate::impl_array_newtype!(TokenTransferMemo, u8, 34);
+crate::impl_array_hexstring_fmt!(TokenTransferMemo);
+crate::impl_byte_array_newtype!(TokenTransferMemo, u8, 34);
+crate::impl_byte_array_serde!(TokenTransferMemo);
 
 impl Txid {
     /// A Stacks transaction ID is a sha512/256 hash (not a double-sha256 hash)

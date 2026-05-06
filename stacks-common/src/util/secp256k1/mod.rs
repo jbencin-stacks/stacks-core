@@ -7,9 +7,6 @@ pub use self::native::*;
 #[cfg(target_family = "wasm")]
 mod wasm;
 
-#[cfg(target_family = "wasm")]
-pub use self::wasm::*;
-
 // `MessageSignature` lives in `stacks-codec` (it appears in the
 // `StacksTransaction` type tree). Re-export so existing call sites
 // (`stacks_common::util::secp256k1::MessageSignature`) keep working.
@@ -20,6 +17,9 @@ pub use self::wasm::*;
 // Bring it into scope at call sites via
 // `use stacks_common::util::secp256k1::MessageSignatureSecpExt;`.
 pub use stacks_codec::signatures::{MessageSignature, MESSAGE_SIGNATURE_ENCODED_SIZE};
+
+#[cfg(target_family = "wasm")]
+pub use self::wasm::*;
 
 pub struct SchnorrSignature(pub [u8; 65]);
 impl_array_newtype!(SchnorrSignature, u8, 65);

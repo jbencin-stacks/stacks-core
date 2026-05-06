@@ -29,9 +29,7 @@ use regex::Regex;
 // `TransactionSmartContract.code_body`). Re-export so existing call sites
 // (`stackslib::util_lib::strings::StacksString`) keep working.
 pub use stacks_codec::strings::StacksString;
-use stacks_common::codec::{
-    read_next, write_next, Error as codec_error, StacksMessageCodec,
-};
+use stacks_common::codec::{read_next, write_next, Error as codec_error, StacksMessageCodec};
 use url;
 
 lazy_static! {
