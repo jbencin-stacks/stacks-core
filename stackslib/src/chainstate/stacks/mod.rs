@@ -1184,15 +1184,9 @@ pub struct StacksBlockHeader {
     pub microblock_pubkey_hash: Hash160, // we'll get the public key back from the first signature (note that this is the Hash160 of the _compressed_ public key)
 }
 
-/// Header structure for a microblock
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct StacksMicroblockHeader {
-    pub version: u8,
-    pub sequence: u16,
-    pub prev_block: BlockHeaderHash,
-    pub tx_merkle_root: Sha512Trunc256Sum,
-    pub signature: MessageSignature,
-}
+// `StacksMicroblockHeader` lives in `stacks-codec` (it appears in
+// `TransactionPayload::PoisonMicroblock`).
+pub use stacks_codec::chainstate::StacksMicroblockHeader;
 
 // values a miner uses to produce the next block
 pub const MINER_BLOCK_CONSENSUS_HASH: ConsensusHash = ConsensusHash([1u8; 20]);
@@ -1233,6 +1227,8 @@ pub mod test {
     use stacks_common::bitvec::BitVec;
     use stacks_common::util::get_epoch_time_secs;
     use stacks_common::util::hash::*;
+
+    use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
 
     use super::*;
     use crate::chainstate::nakamoto::{NakamotoBlock, NakamotoBlockHeader};

@@ -40,6 +40,7 @@ use crate::burnchains::{Burnchain, Txid};
 use crate::chainstate::burn::db::sortdb::{SortitionDB, SortitionHandleConn};
 use crate::chainstate::burn::*;
 use crate::chainstate::stacks::address::StacksAddressExtensions;
+use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
 use crate::chainstate::stacks::db::blocks::SetupBlockResult;
 use crate::chainstate::stacks::db::transactions::{
     convert_clarity_error_to_transaction_result, handle_clarity_runtime_error,

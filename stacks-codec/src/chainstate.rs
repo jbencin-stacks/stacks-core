@@ -14,10 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use std::io::{Read, Write};
+
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512_256};
 
 use crate::hash::{Hash160, Sha512Trunc256Sum};
-use crate::{Error as CodecError, StacksMessageCodec};
+use crate::signatures::MessageSignature;
+use crate::{read_next, write_next, Error as CodecError, StacksMessageCodec};
 
 pub struct Txid(pub [u8; 32]);
 crate::impl_array_newtype!(Txid, u8, 32);
@@ -119,5 +123,108 @@ impl BlockHeaderHash {
     pub fn from_serialized_header(buf: &[u8]) -> BlockHeaderHash {
         let h = Sha512Trunc256Sum::from_data(buf);
         BlockHeaderHash(h.to_bytes())
+    }
+}
+
+/// Header structure for a microblock. Lives here because
+/// `TransactionPayload::PoisonMicroblock(StacksMicroblockHeader,
+/// StacksMicroblockHeader)` is part of the StacksTransaction tree.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StacksMicroblockHeader {
+    pub version: u8,
+    pub sequence: u16,
+    pub prev_block: BlockHeaderHash,
+    pub tx_merkle_root: Sha512Trunc256Sum,
+    pub signature: MessageSignature,
+}
+
+impl StacksMessageCodec for StacksMicroblockHeader {
+    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), CodecError> {
+        self.serialize(fd, false)
+    }
+
+    fn consensus_deserialize<R: Read>(fd: &mut R) -> Result<StacksMicroblockHeader, CodecError> {
+        let version: u8 = read_next(fd)?;
+        let sequence: u16 = read_next(fd)?;
+        let prev_block: BlockHeaderHash = read_next(fd)?;
+        let tx_merkle_root: Sha512Trunc256Sum = read_next(fd)?;
+        let signature: MessageSignature = read_next(fd)?;
+
+        // The original `stackslib` impl had a `cfg(not(any(test, feature =
+        // "testing")))`-gated `to_secp256k1_recoverable()` call here as a
+        // fail-fast on malformed sigs. Dropped during the move to stacks-codec
+        // — `MessageSignature::is_recoverable()` is available for callers
+        // that want the same eager check, and signature verification at
+        // `verify` time still catches malformed sigs unconditionally.
+
+        Ok(StacksMicroblockHeader {
+            version,
+            sequence,
+            prev_block,
+            tx_merkle_root,
+            signature,
+        })
+    }
+}
+
+impl StacksMicroblockHeader {
+    /// Internal serialization helper. With `empty_sig=true`, writes a
+    /// zeroed-out signature placeholder (used by signing / verify paths).
+    pub fn serialize<W: Write>(&self, fd: &mut W, empty_sig: bool) -> Result<(), CodecError> {
+        write_next(fd, &self.version)?;
+        write_next(fd, &self.sequence)?;
+        write_next(fd, &self.prev_block)?;
+        write_next(fd, &self.tx_merkle_root)?;
+        if empty_sig {
+            write_next(fd, &MessageSignature::empty())?;
+        } else {
+            write_next(fd, &self.signature)?;
+        }
+        Ok(())
+    }
+
+    pub fn block_hash(&self) -> BlockHeaderHash {
+        let mut bytes = vec![];
+        self.consensus_serialize(&mut bytes)
+            .expect("BUG: failed to serialize to a vec");
+        BlockHeaderHash::from_serialized_header(&bytes[..])
+    }
+
+    /// Create the first microblock header in a microblock stream.
+    /// The header will not be signed
+    pub fn first_unsigned(
+        parent_block_hash: &BlockHeaderHash,
+        tx_merkle_root: &Sha512Trunc256Sum,
+    ) -> StacksMicroblockHeader {
+        StacksMicroblockHeader {
+            version: 0,
+            sequence: 0,
+            prev_block: parent_block_hash.clone(),
+            tx_merkle_root: tx_merkle_root.clone(),
+            signature: MessageSignature::empty(),
+        }
+    }
+
+    /// Create the first microblock header in a microblock stream for an empty microblock stream.
+    /// The header will not be signed
+    pub fn first_empty_unsigned(parent_block_hash: &BlockHeaderHash) -> StacksMicroblockHeader {
+        StacksMicroblockHeader::first_unsigned(parent_block_hash, &Sha512Trunc256Sum([0u8; 32]))
+    }
+
+    /// Create an unsigned microblock header from its parent
+    /// Return an error on overflow
+    pub fn from_parent_unsigned(
+        parent_header: &StacksMicroblockHeader,
+        tx_merkle_root: &Sha512Trunc256Sum,
+    ) -> Option<StacksMicroblockHeader> {
+        let next_sequence = parent_header.sequence.checked_add(1)?;
+
+        Some(StacksMicroblockHeader {
+            version: 0,
+            sequence: next_sequence,
+            prev_block: parent_header.block_hash(),
+            tx_merkle_root: tx_merkle_root.clone(),
+            signature: MessageSignature::empty(),
+        })
     }
 }

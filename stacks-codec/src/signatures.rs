@@ -62,4 +62,28 @@ impl MessageSignature {
     pub fn to_rsv(&self) -> Vec<u8> {
         [&self.0[1..], &self.0[0..1]].concat()
     }
+
+    /// Returns true if these 65 bytes parse as a recoverable secp256k1 signature
+    /// (1-byte recovery id followed by a 64-byte compact signature). Cheaper
+    /// equivalent of `MessageSignatureSecpExt::to_secp256k1_recoverable(...).is_some()`
+    /// used by codec deserializers to fail-fast on malformed sigs.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn is_recoverable(&self) -> bool {
+        let recid = match secp256k1::ecdsa::RecoveryId::from_i32(self.0[0] as i32) {
+            Ok(rid) => rid,
+            Err(_) => return false,
+        };
+        let mut sig_bytes = [0u8; 64];
+        sig_bytes[..64].copy_from_slice(&self.0[1..=64]);
+        secp256k1::ecdsa::RecoverableSignature::from_compact(&sig_bytes, recid).is_ok()
+    }
+
+    /// Same check as the native variant; uses `libsecp256k1` on wasm.
+    #[cfg(target_family = "wasm")]
+    pub fn is_recoverable(&self) -> bool {
+        if libsecp256k1::RecoveryId::parse(self.0[0]).is_err() {
+            return false;
+        }
+        libsecp256k1::Signature::parse_standard_slice(&self.0[1..65]).is_ok()
+    }
 }

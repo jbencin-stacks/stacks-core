@@ -40,6 +40,7 @@ use crate::chainstate::burn::db::sortdb::*;
 use crate::chainstate::burn::operations::{BlockstackOperationType, LeaderBlockCommitOp};
 use crate::chainstate::burn::*;
 use crate::chainstate::coordinator::Error as CoordinatorError;
+use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
 use crate::chainstate::stacks::db::blocks::test::store_staging_block;
 use crate::chainstate::stacks::db::blocks::MemPoolRejection;
 use crate::chainstate::stacks::db::test::*;

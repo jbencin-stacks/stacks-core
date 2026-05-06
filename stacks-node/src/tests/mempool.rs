@@ -21,6 +21,7 @@ use clarity::vm::representations::ContractName;
 use clarity::vm::types::{PrincipalData, QualifiedContractIdentifier, StandardPrincipalData};
 use clarity::vm::Value;
 use lazy_static::lazy_static;
+use stacks::chainstate::stacks::block::StacksMicroblockHeaderExt;
 use stacks::chainstate::stacks::db::blocks::MemPoolRejection;
 use stacks::chainstate::stacks::{
     Error as ChainstateError, StacksBlockHeader, StacksMicroblockHeader, StacksPrivateKey,

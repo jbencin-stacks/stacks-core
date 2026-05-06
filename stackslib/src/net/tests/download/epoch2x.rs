@@ -25,6 +25,7 @@ use stacks_common::util::vrf::VRFProof;
 use crate::burnchains::tests::TestMiner;
 use crate::chainstate::burn::db::sortdb::*;
 use crate::chainstate::burn::operations::*;
+use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
 use crate::chainstate::stacks::db::blocks::MINIMUM_TX_FEE_RATE_PER_BYTE;
 use crate::chainstate::stacks::miner::*;
 use crate::chainstate::stacks::tests::*;
