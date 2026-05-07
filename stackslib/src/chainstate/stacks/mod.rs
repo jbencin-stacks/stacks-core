@@ -422,40 +422,13 @@ pub use stacks_codec::transaction::{
     TransactionAuthField, TransactionAuthFieldID, TransactionAuthFlags,
     TransactionPublicKeyEncoding,
 };
-
-/// A structure that encodes enough state to authenticate
-/// a transaction's execution against a Stacks address.
-/// public_keys + signatures_required determines the Principal.
-/// nonce is the "check number" for the Principal.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct MultisigSpendingCondition {
-    pub hash_mode: MultisigHashMode,
-    pub signer: Hash160,
-    pub nonce: u64,  // nth authorization from this account
-    pub tx_fee: u64, // microSTX/compute rate offered by this account
-    pub fields: Vec<TransactionAuthField>,
-    pub signatures_required: u16,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SinglesigSpendingCondition {
-    pub hash_mode: SinglesigHashMode,
-    pub signer: Hash160,
-    pub nonce: u64,  // nth authorization from this account
-    pub tx_fee: u64, // microSTX/compute rate offerred by this account
-    pub key_encoding: TransactionPublicKeyEncoding,
-    pub signature: MessageSignature,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct OrderIndependentMultisigSpendingCondition {
-    pub hash_mode: OrderIndependentMultisigHashMode,
-    pub signer: Hash160,
-    pub nonce: u64,  // nth authorization from this account
-    pub tx_fee: u64, // microSTX/compute rate offered by this account
-    pub fields: Vec<TransactionAuthField>,
-    pub signatures_required: u16,
-}
+// Spending-condition structs (Singlesig/Multisig/OrderIndependentMultisig)
+// live in stacks-codec; re-exported alongside the auth-tree primitive enums
+// above.
+pub use stacks_codec::transaction::{
+    MultisigSpendingCondition, OrderIndependentMultisigSpendingCondition,
+    SinglesigSpendingCondition,
+};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TransactionSpendingCondition {

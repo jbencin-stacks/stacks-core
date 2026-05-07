@@ -17,155 +17,46 @@
 use std::io::{Read, Write};
 
 use stacks_common::address::AddressHashMode;
-use stacks_common::codec::{
-    read_next, write_next, Error as codec_error, StacksMessageCodec, MAX_MESSAGE_LEN,
-};
+use stacks_common::codec::{read_next, write_next, Error as codec_error, StacksMessageCodec};
 use stacks_common::types::chainstate::StacksAddress;
 use stacks_common::types::{StacksAddressExt, StacksEpochId};
 use stacks_common::util::hash::Hash160;
-use stacks_common::util::retry::BoundReader;
 use stacks_common::util::secp256k1::{MessageSignature, MESSAGE_SIGNATURE_ENCODED_SIZE};
 
 use crate::burnchains::{PrivateKey, Txid};
 use crate::chainstate::stacks::{
     Error, MultisigHashMode, MultisigSpendingCondition, OrderIndependentMultisigHashMode,
     OrderIndependentMultisigSpendingCondition, SinglesigHashMode, SinglesigSpendingCondition,
-    StacksPrivateKey, StacksPublicKey, TransactionAuth, TransactionAuthField,
-    TransactionAuthFieldID, TransactionAuthFlags, TransactionPublicKeyEncoding,
-    TransactionSpendingCondition, C32_ADDRESS_VERSION_MAINNET_MULTISIG,
-    C32_ADDRESS_VERSION_MAINNET_SINGLESIG, C32_ADDRESS_VERSION_TESTNET_MULTISIG,
-    C32_ADDRESS_VERSION_TESTNET_SINGLESIG,
+    StacksPrivateKey, StacksPublicKey, TransactionAuth, TransactionAuthField, TransactionAuthFlags,
+    TransactionPublicKeyEncoding, TransactionSpendingCondition,
 };
 use crate::net::Error as net_error;
 
 // `TransactionAuthField`'s `StacksMessageCodec` impl lives in
 // `stacks-codec` alongside the type itself.
 
-impl StacksMessageCodec for MultisigSpendingCondition {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
-        write_next(fd, &(self.hash_mode.clone() as u8))?;
-        write_next(fd, &self.signer)?;
-        write_next(fd, &self.nonce)?;
-        write_next(fd, &self.tx_fee)?;
-        write_next(fd, &self.fields)?;
-        write_next(fd, &self.signatures_required)?;
-        Ok(())
-    }
+// `Singlesig`/`Multisig`/`OrderIndependentMultisig` `SpendingCondition`'s
+// `StacksMessageCodec` impls and their pure inherent methods (push_*,
+// pop_*, address_mainnet/testnet) live in stacks-codec. The `verify`
+// method requires `net_error` (this crate) and `StacksAddress::from_public_keys`
+// (stacks-common ext-trait), so it's expressed as the
+// `SpendingConditionVerifyExt` trait below — bring it into scope at call
+// sites.
 
-    fn consensus_deserialize<R: Read>(
-        fd: &mut R,
-    ) -> Result<MultisigSpendingCondition, codec_error> {
-        let hash_mode_u8: u8 = read_next(fd)?;
-        let hash_mode = MultisigHashMode::from_u8(hash_mode_u8).ok_or(
-            codec_error::DeserializeError(format!(
-                "Failed to parse multisig spending condition: unknown hash mode {}",
-                hash_mode_u8
-            )),
-        )?;
-
-        let signer: Hash160 = read_next(fd)?;
-        let nonce: u64 = read_next(fd)?;
-        let tx_fee: u64 = read_next(fd)?;
-        let fields: Vec<TransactionAuthField> = {
-            let mut bound_read = BoundReader::from_reader(fd, MAX_MESSAGE_LEN as u64);
-            read_next(&mut bound_read)
-        }?;
-
-        let signatures_required: u16 = read_next(fd)?;
-
-        // read and decode _exactly_ num_signatures signature buffers
-        let mut num_sigs_given: u16 = 0;
-        let mut have_uncompressed = false;
-        for f in fields.iter() {
-            match *f {
-                TransactionAuthField::Signature(ref key_encoding, _) => {
-                    num_sigs_given =
-                        num_sigs_given
-                            .checked_add(1)
-                            .ok_or(codec_error::DeserializeError(
-                                "Failed to parse multisig spending condition: too many signatures"
-                                    .to_string(),
-                            ))?;
-                    if *key_encoding == TransactionPublicKeyEncoding::Uncompressed {
-                        have_uncompressed = true;
-                    }
-                }
-                TransactionAuthField::PublicKey(ref pubk) => {
-                    if !pubk.compressed() {
-                        have_uncompressed = true;
-                    }
-                }
-            };
-        }
-
-        // must be given the right number of signatures
-        if num_sigs_given != signatures_required {
-            test_debug!(
-                "Failed to deserialize multisig spending condition: got {} sigs, expected {}",
-                num_sigs_given,
-                signatures_required
-            );
-            return Err(codec_error::DeserializeError(format!(
-                "Failed to parse multisig spending condition: got {} sigs, expected {}",
-                num_sigs_given, signatures_required
-            )));
-        }
-
-        // must all be compressed if we're using P2WSH
-        if have_uncompressed && hash_mode == MultisigHashMode::P2WSH {
-            test_debug!(
-                "Failed to deserialize multisig spending condition: expected compressed keys only"
-            );
-            return Err(codec_error::DeserializeError(
-                "Failed to parse multisig spending condition: expected compressed keys only"
-                    .to_string(),
-            ));
-        }
-
-        Ok(MultisigSpendingCondition {
-            signer,
-            nonce,
-            tx_fee,
-            hash_mode,
-            fields,
-            signatures_required,
-        })
-    }
-}
-
-impl MultisigSpendingCondition {
-    pub fn push_signature(
-        &mut self,
-        key_encoding: TransactionPublicKeyEncoding,
-        signature: MessageSignature,
-    ) {
-        self.fields
-            .push(TransactionAuthField::Signature(key_encoding, signature));
-    }
-
-    pub fn push_public_key(&mut self, public_key: StacksPublicKey) {
-        self.fields
-            .push(TransactionAuthField::PublicKey(public_key));
-    }
-
-    pub fn pop_auth_field(&mut self) -> Option<TransactionAuthField> {
-        self.fields.pop()
-    }
-
-    pub fn address_mainnet(&self) -> StacksAddress {
-        StacksAddress::new(C32_ADDRESS_VERSION_MAINNET_MULTISIG, self.signer.clone())
-            .expect("FATAL: infallible: constant is not a valid address byte")
-    }
-
-    pub fn address_testnet(&self) -> StacksAddress {
-        StacksAddress::new(C32_ADDRESS_VERSION_TESTNET_MULTISIG, self.signer.clone())
-            .expect("FATAL: infallible: constant is not a valid address byte")
-    }
-
+pub trait SpendingConditionVerifyExt {
     /// Authenticate a spending condition against an initial sighash.
     /// In doing so, recover all public keys and verify that they hash to the signer
     /// via the given hash mode.
-    pub fn verify(
+    /// Returns the final sighash.
+    fn verify(
+        &self,
+        initial_sighash: &Txid,
+        cond_code: &TransactionAuthFlags,
+    ) -> Result<Txid, net_error>;
+}
+
+impl SpendingConditionVerifyExt for MultisigSpendingCondition {
+    fn verify(
         &self,
         initial_sighash: &Txid,
         cond_code: &TransactionAuthFlags,
@@ -239,123 +130,8 @@ impl MultisigSpendingCondition {
     }
 }
 
-impl StacksMessageCodec for OrderIndependentMultisigSpendingCondition {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
-        write_next(fd, &(self.hash_mode.clone() as u8))?;
-        write_next(fd, &self.signer)?;
-        write_next(fd, &self.nonce)?;
-        write_next(fd, &self.tx_fee)?;
-        write_next(fd, &self.fields)?;
-        write_next(fd, &self.signatures_required)?;
-        Ok(())
-    }
-
-    fn consensus_deserialize<R: Read>(
-        fd: &mut R,
-    ) -> Result<OrderIndependentMultisigSpendingCondition, codec_error> {
-        let hash_mode_u8: u8 = read_next(fd)?;
-        let hash_mode = OrderIndependentMultisigHashMode::from_u8(hash_mode_u8).ok_or(
-            codec_error::DeserializeError(format!(
-                "Failed to parse multisig spending condition: unknown hash mode {}",
-                hash_mode_u8
-            )),
-        )?;
-
-        let signer: Hash160 = read_next(fd)?;
-        let nonce: u64 = read_next(fd)?;
-        let tx_fee: u64 = read_next(fd)?;
-        let fields: Vec<TransactionAuthField> = {
-            let mut bound_read = BoundReader::from_reader(fd, MAX_MESSAGE_LEN as u64);
-            read_next(&mut bound_read)
-        }?;
-
-        let signatures_required: u16 = read_next(fd)?;
-
-        // read and decode _exactly_ num_signatures signature buffers
-        let mut num_sigs_given: u16 = 0;
-        let mut have_uncompressed = false;
-        for f in fields.iter() {
-            match *f {
-                TransactionAuthField::Signature(ref key_encoding, _) => {
-                    num_sigs_given =
-                        num_sigs_given
-                            .checked_add(1)
-                            .ok_or(codec_error::DeserializeError(
-                                "Failed to parse order independent multisig spending condition: too many signatures"
-                                    .to_string(),
-                            ))?;
-                    if *key_encoding == TransactionPublicKeyEncoding::Uncompressed {
-                        have_uncompressed = true;
-                    }
-                }
-                TransactionAuthField::PublicKey(ref pubk) => {
-                    if !pubk.compressed() {
-                        have_uncompressed = true;
-                    }
-                }
-            };
-        }
-
-        // must be given the right number of signatures
-        if num_sigs_given < signatures_required {
-            let msg = format!(
-                "Failed to deserialize order independent multisig spending condition: got {num_sigs_given} sigs, expected at least {signatures_required}"
-            );
-            test_debug!("{msg}");
-            return Err(codec_error::DeserializeError(msg));
-        }
-
-        // must all be compressed if we're using P2WSH
-        if have_uncompressed && hash_mode == OrderIndependentMultisigHashMode::P2WSH {
-            let msg = "Failed to deserialize order independent multisig spending condition: expected compressed keys only".to_string();
-            test_debug!("{msg}");
-            return Err(codec_error::DeserializeError(msg));
-        }
-
-        Ok(OrderIndependentMultisigSpendingCondition {
-            signer,
-            nonce,
-            tx_fee,
-            hash_mode,
-            fields,
-            signatures_required,
-        })
-    }
-}
-
-impl OrderIndependentMultisigSpendingCondition {
-    pub fn push_signature(
-        &mut self,
-        key_encoding: TransactionPublicKeyEncoding,
-        signature: MessageSignature,
-    ) {
-        self.fields
-            .push(TransactionAuthField::Signature(key_encoding, signature));
-    }
-
-    pub fn push_public_key(&mut self, public_key: StacksPublicKey) {
-        self.fields
-            .push(TransactionAuthField::PublicKey(public_key));
-    }
-
-    pub fn pop_auth_field(&mut self) -> Option<TransactionAuthField> {
-        self.fields.pop()
-    }
-
-    pub fn address_mainnet(&self) -> StacksAddress {
-        StacksAddress::new(C32_ADDRESS_VERSION_MAINNET_MULTISIG, self.signer.clone())
-            .expect("FATAL: infallible: constant address byte is not supported")
-    }
-
-    pub fn address_testnet(&self) -> StacksAddress {
-        StacksAddress::new(C32_ADDRESS_VERSION_TESTNET_MULTISIG, self.signer.clone())
-            .expect("FATAL: infallible: constant address byte is not supported")
-    }
-
-    /// Authenticate a spending condition against an initial sighash.
-    /// In doing so, recover all public keys and verify that they hash to the signer
-    /// via the given hash mode.
-    pub fn verify(
+impl SpendingConditionVerifyExt for OrderIndependentMultisigSpendingCondition {
+    fn verify(
         &self,
         initial_sighash: &Txid,
         cond_code: &TransactionAuthFlags,
@@ -428,100 +204,8 @@ impl OrderIndependentMultisigSpendingCondition {
     }
 }
 
-impl StacksMessageCodec for SinglesigSpendingCondition {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
-        write_next(fd, &(self.hash_mode.clone() as u8))?;
-        write_next(fd, &self.signer)?;
-        write_next(fd, &self.nonce)?;
-        write_next(fd, &self.tx_fee)?;
-        write_next(fd, &(self.key_encoding as u8))?;
-        write_next(fd, &self.signature)?;
-        Ok(())
-    }
-
-    fn consensus_deserialize<R: Read>(
-        fd: &mut R,
-    ) -> Result<SinglesigSpendingCondition, codec_error> {
-        let hash_mode_u8: u8 = read_next(fd)?;
-        let hash_mode = SinglesigHashMode::from_u8(hash_mode_u8).ok_or(
-            codec_error::DeserializeError(format!(
-                "Failed to parse singlesig spending condition: unknown hash mode {}",
-                hash_mode_u8
-            )),
-        )?;
-
-        let signer: Hash160 = read_next(fd)?;
-        let nonce: u64 = read_next(fd)?;
-        let tx_fee: u64 = read_next(fd)?;
-
-        let key_encoding_u8: u8 = read_next(fd)?;
-        let key_encoding = TransactionPublicKeyEncoding::from_u8(key_encoding_u8).ok_or(
-            codec_error::DeserializeError(format!(
-                "Failed to parse singlesig spending condition: unknown key encoding {}",
-                key_encoding_u8
-            )),
-        )?;
-
-        let signature: MessageSignature = read_next(fd)?;
-
-        // sanity check -- must be compressed if we're using p2wpkh
-        if hash_mode == SinglesigHashMode::P2WPKH
-            && key_encoding != TransactionPublicKeyEncoding::Compressed
-        {
-            test_debug!("Incompatible hashing mode and key encoding");
-            return Err(codec_error::DeserializeError("Failed to parse singlesig spending condition: incomaptible hash mode and key encoding".to_string()));
-        }
-
-        Ok(SinglesigSpendingCondition {
-            signer,
-            nonce,
-            tx_fee,
-            hash_mode,
-            key_encoding,
-            signature,
-        })
-    }
-}
-
-impl SinglesigSpendingCondition {
-    pub fn set_signature(&mut self, signature: MessageSignature) {
-        self.signature = signature;
-    }
-
-    pub fn pop_signature(&mut self) -> Option<TransactionAuthField> {
-        if self.signature == MessageSignature::empty() {
-            return None;
-        }
-
-        let ret = self.signature.clone();
-        self.signature = MessageSignature::empty();
-
-        return Some(TransactionAuthField::Signature(self.key_encoding, ret));
-    }
-
-    pub fn address_mainnet(&self) -> StacksAddress {
-        let version = match self.hash_mode {
-            SinglesigHashMode::P2PKH => C32_ADDRESS_VERSION_MAINNET_SINGLESIG,
-            SinglesigHashMode::P2WPKH => C32_ADDRESS_VERSION_MAINNET_MULTISIG,
-        };
-        StacksAddress::new(version, self.signer.clone())
-            .expect("FATAL: infallible: supported address constant is not valid")
-    }
-
-    pub fn address_testnet(&self) -> StacksAddress {
-        let version = match self.hash_mode {
-            SinglesigHashMode::P2PKH => C32_ADDRESS_VERSION_TESTNET_SINGLESIG,
-            SinglesigHashMode::P2WPKH => C32_ADDRESS_VERSION_TESTNET_MULTISIG,
-        };
-        StacksAddress::new(version, self.signer.clone())
-            .expect("FATAL: infallible: supported address constant is not valid")
-    }
-
-    /// Authenticate a spending condition against an initial sighash.
-    /// In doing so, recover all public keys and verify that they hash to the signer
-    /// via the given hash mode.
-    /// Returns the final sighash
-    pub fn verify(
+impl SpendingConditionVerifyExt for SinglesigSpendingCondition {
+    fn verify(
         &self,
         initial_sighash: &Txid,
         cond_code: &TransactionAuthFlags,
@@ -1316,7 +1000,7 @@ impl TransactionAuth {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::chainstate::stacks::StacksPublicKey as PubKey;
+    use crate::chainstate::stacks::{StacksPublicKey as PubKey, TransactionAuthFieldID};
     use crate::net::codec::test::check_codec_and_corruption;
 
     #[test]
