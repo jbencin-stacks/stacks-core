@@ -46,6 +46,7 @@ use stacks::types::chainstate::{
     BlockHeaderHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
 };
 use stacks::types::net::PeerHost;
+use stacks::types::StacksAddressExt;
 use stacks::util::hash::{Hash160, Sha512Trunc256Sum};
 use stacks::util::secp256k1::MessageSignature;
 use stacks_common::bitvec::BitVec;

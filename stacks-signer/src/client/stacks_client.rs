@@ -42,7 +42,7 @@ use stacks_common::consts::CHAIN_ID_MAINNET;
 use stacks_common::types::chainstate::{
     ConsensusHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
 };
-use stacks_common::types::StacksEpochId;
+use stacks_common::types::{StacksAddressExt, StacksEpochId};
 use stacks_common::{debug, warn};
 
 use super::SignerSlotID;

@@ -92,6 +92,7 @@ use stacks_common::deps_common::bitcoin::network::serialize::BitcoinHash as _;
 use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, StacksAddress, StacksBlockId,
 };
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::StacksPublicKeyBuffer;
 use stacks_common::util::hash::{bytes_to_hex, hex_bytes, to_hex, Hash160, Hash160PubKeyExt};
 use stacks_common::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};

@@ -18,6 +18,7 @@ use clarity::types::chainstate::TenureBlockId;
 use clarity::vm::types::*;
 use rusqlite::{params, Row};
 use stacks_common::types::chainstate::{StacksAddress, StacksBlockId};
+use stacks_common::types::StacksAddressExt;
 
 use crate::chainstate::stacks::db::*;
 use crate::chainstate::stacks::{Error, *};

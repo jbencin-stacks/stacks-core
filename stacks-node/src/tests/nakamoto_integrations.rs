@@ -106,6 +106,7 @@ use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
     TrieHash,
 };
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::{
     set_test_coinbase_schedule, set_test_sip_031_emission_schedule, CoinbaseInterval,
     SIP031EmissionInterval, StacksPublicKeyBuffer,

@@ -25,6 +25,7 @@ use stacks_common::address::{AddressHashMode, C32_ADDRESS_VERSION_TESTNET_SINGLE
 use stacks_common::types::chainstate::{
     StacksAddress, StacksBlockId, StacksPrivateKey, StacksPublicKey,
 };
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::Address;
 
 use crate::chainstate::burn::db::sortdb::{SortitionDB, SortitionHandleConn};

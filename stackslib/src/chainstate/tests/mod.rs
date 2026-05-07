@@ -31,6 +31,7 @@ use clarity::consts::{
 use clarity::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, StacksAddress, StacksBlockId,
 };
+use clarity::types::StacksAddressExt;
 use clarity::vm::ast::parser::v1::CONTRACT_MAX_NAME_LENGTH;
 use clarity::vm::costs::ExecutionCost;
 use clarity::vm::database::STXBalance;

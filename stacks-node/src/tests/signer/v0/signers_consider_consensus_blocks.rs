@@ -21,6 +21,7 @@ use stacks::chainstate::burn::db::sortdb::SortitionDB;
 use stacks::chainstate::stacks::TenureChangeCause;
 use stacks::core::test_util::{make_stacks_transfer_serialized, to_addr};
 use stacks::types::chainstate::{StacksAddress, StacksPublicKey};
+use stacks::types::StacksAddressExt;
 use stacks::util::secp256k1::Secp256k1PrivateKey;
 use stacks_signer::v0::tests::{
     TEST_IGNORE_ALL_BLOCK_PROPOSALS, TEST_REJECT_ALL_BLOCK_PROPOSAL,

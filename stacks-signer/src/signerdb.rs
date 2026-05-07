@@ -2528,6 +2528,7 @@ pub mod tests {
         TransactionVersion,
     };
     use clarity::types::chainstate::{StacksBlockId, StacksPrivateKey, StacksPublicKey};
+    use clarity::types::StacksAddressExt;
     use clarity::types::PrivateKey;
     use clarity::util::hash::{Hash160, Hash160PubKeyExt};
     use clarity::util::secp256k1::MessageSignature;

@@ -32,6 +32,7 @@ use blockstack_lib::net::api::get_tenure_tip_meta::BlockHeaderWithMetadata;
 use blockstack_lib::net::api::get_tenures_fork_info::TenureForkingInfo;
 use blockstack_lib::net::api::getsortition::SortitionInfo;
 use clarity::types::chainstate::{BurnchainHeaderHash, SortitionId, StacksAddress};
+use clarity::types::StacksAddressExt;
 use clarity::util::vrf::VRFProof;
 use libsigner::v0::messages::RejectReason;
 use libsigner::v0::signer_state::ReplayTransactionSet;

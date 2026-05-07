@@ -26,6 +26,7 @@ use clarity::vm::types::{
 use clarity::vm::Value::Optional;
 use stacks_common::address::AddressHashMode;
 use stacks_common::types::chainstate::{BurnchainHeaderHash, StacksAddress, StacksBlockId};
+use stacks_common::types::StacksAddressExt;
 use stacks_common::util::hash::to_hex;
 use stacks_common::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 

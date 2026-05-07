@@ -1208,6 +1208,7 @@ impl LocalStateMachine {
         #[cfg(any(test, feature = "testing"))]
         {
             use clarity::types::chainstate::StacksAddress;
+            use clarity::types::StacksAddressExt;
 
             let ignore_bitcoin_fork = TEST_IGNORE_BITCOIN_FORK_PUBKEYS
                 .get()

@@ -22,6 +22,7 @@ use clarity::vm::types::PrincipalData;
 use stacks_common::address::{AddressHashMode, C32_ADDRESS_VERSION_TESTNET_SINGLESIG};
 use stacks_common::codec::{read_next, StacksMessageCodec};
 use stacks_common::types::chainstate::{StacksAddress, StacksPrivateKey, StacksPublicKey};
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::net::PeerAddress;
 use stacks_common::types::StacksEpoch;
 use stacks_common::util::hash::Hash160;

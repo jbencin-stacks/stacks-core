@@ -30,6 +30,7 @@ use stacks_common::address::{
 };
 use stacks_common::consts::{CHAIN_ID_MAINNET, CHAIN_ID_TESTNET};
 use stacks_common::types::chainstate::{StacksAddress, StacksPrivateKey, StacksPublicKey};
+use stacks_common::types::StacksAddressExt;
 use stacks_common::util::hash::Hash160;
 
 use crate::client::SignerSlotID;

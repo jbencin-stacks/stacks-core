@@ -29,6 +29,7 @@ use stacks_common::codec::StacksMessageCodec;
 use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, StacksAddress, StacksBlockId, StacksWorkScore, TrieHash,
 };
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::{MempoolCollectionBehavior, StacksEpochId};
 use stacks_common::util::hash::{Hash160, *};
 use stacks_common::util::secp256k1::MessageSignature;

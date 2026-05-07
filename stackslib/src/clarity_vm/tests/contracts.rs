@@ -25,6 +25,7 @@ use clarity::vm::types::{
 use clarity::vm::Value::Sequence;
 use clarity::vm::{ClarityName, ClarityVersion};
 use stacks_common::types::chainstate::StacksAddress;
+use stacks_common::types::StacksAddressExt;
 
 use crate::chainstate::stacks::boot::contract_tests::{test_sim_height_to_hash, ClarityTestSim};
 use crate::clarity::vm::clarity::{ClarityConnection, TransactionConnection};

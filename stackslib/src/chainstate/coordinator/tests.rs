@@ -37,6 +37,7 @@ use stacks_common::deps_common::bitcoin::util::hash::Sha256dHash;
 use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, SortitionId, StacksAddress, StacksBlockId, VRFSeed,
 };
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::StacksPublicKeyBuffer;
 use stacks_common::util::hash::Hash160;
 use stacks_common::util::vrf::*;

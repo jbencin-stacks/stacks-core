@@ -2464,6 +2464,7 @@ mod tests {
     use stacks::config::DEFAULT_SATS_PER_VB;
     use stacks_common::deps_common::bitcoin::blockdata::script::Builder;
     use stacks_common::types::chainstate::{BlockHeaderHash, StacksAddress, VRFSeed};
+    use stacks_common::types::StacksAddressExt;
     use stacks_common::util::hash::to_hex;
     use stacks_common::util::secp256k1::Secp256k1PrivateKey;
 

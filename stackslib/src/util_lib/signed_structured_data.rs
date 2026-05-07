@@ -182,6 +182,7 @@ pub mod pox4 {
         use stacks_common::address::AddressHashMode;
         use stacks_common::consts::CHAIN_ID_TESTNET;
         use stacks_common::types::chainstate::StacksAddress;
+        use stacks_common::types::StacksAddressExt;
         use stacks_common::util::hash::to_hex;
         use stacks_common::util::secp256k1::Secp256k1PublicKey;
 

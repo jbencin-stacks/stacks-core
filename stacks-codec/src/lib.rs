@@ -20,6 +20,8 @@ use std::{error, fmt, io, mem};
 #[macro_use]
 pub mod macros;
 
+pub mod address;
+pub mod c32;
 pub mod chainstate;
 pub mod hash;
 pub mod hex;

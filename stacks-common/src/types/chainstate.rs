@@ -21,10 +21,9 @@ use std::str::FromStr;
 use serde::Serialize;
 use sha2::{Digest as Sha2Digest, Sha512_256};
 
-use crate::address::Error as AddressError;
 use crate::codec::{read_next, write_next, Error as CodecError, StacksMessageCodec};
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
-use crate::util::hash::{Hash160, Sha512Trunc256Sum, HASH160_ENCODED_SIZE};
+use crate::util::hash::Sha512Trunc256Sum;
 use crate::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 use crate::util::vrf::VRFProof;
 
@@ -257,75 +256,10 @@ impl fmt::Display for PoxId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct StacksAddress {
-    version: u8,
-    bytes: Hash160,
-}
-
-impl StacksAddress {
-    pub fn new(version: u8, hash: Hash160) -> Result<StacksAddress, AddressError> {
-        if version >= 32 {
-            return Err(AddressError::InvalidVersion(version));
-        }
-
-        Ok(StacksAddress {
-            version,
-            bytes: hash,
-        })
-    }
-
-    // NEVER, EVER use this in ANY production code!
-    // It should never be possible to construct an address with a version greater than 31
-    #[cfg(any(test, feature = "testing"))]
-    pub fn new_unsafe(version: u8, bytes: Hash160) -> Self {
-        Self { version, bytes }
-    }
-
-    pub fn version(&self) -> u8 {
-        self.version
-    }
-
-    pub fn bytes(&self) -> &Hash160 {
-        &self.bytes
-    }
-
-    pub fn destruct(self) -> (u8, Hash160) {
-        (self.version, self.bytes)
-    }
-
-    /// Because addresses are crockford-32 encoded, the version must be a 5-bit number.
-    /// Historically, it was possible to construct invalid addresses given that we use a u8 to
-    /// represent the version.  This function is used to validate addresses before relying on their
-    /// version.
-    pub fn has_valid_version(&self) -> bool {
-        self.version < 32
-    }
-}
-
-impl StacksMessageCodec for StacksAddress {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), CodecError> {
-        write_next(fd, &self.version)?;
-        fd.write_all(self.bytes.as_bytes())
-            .map_err(CodecError::WriteError)
-    }
-
-    fn consensus_deserialize<R: Read>(fd: &mut R) -> Result<StacksAddress, CodecError> {
-        let version: u8 = read_next(fd)?;
-        if version >= 32 {
-            return Err(CodecError::DeserializeError(
-                "Address version byte must be in range 0 to 31".into(),
-            ));
-        }
-        let hash160: Hash160 = read_next(fd)?;
-        Ok(StacksAddress {
-            version,
-            bytes: hash160,
-        })
-    }
-}
-
-pub const STACKS_ADDRESS_ENCODED_SIZE: u32 = 1 + HASH160_ENCODED_SIZE;
+// `StacksAddress` lives in `stacks-codec`. Re-exported at the bottom of this
+// file. Methods that depend on stacks-common-only types
+// (`Secp256k1PublicKey`, `AddressHashMode`, c32 `Address` trait,
+// `from_string`) live in `crate::types::mod` as the `StacksAddressExt` trait.
 
 /// How much work has gone into this chain so far?
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -399,6 +333,7 @@ impl_byte_array_message_codec!(BurnchainHeaderHash, 32);
 // Re-exports for the chainstate types now living in `stacks-codec`. Existing
 // call sites (`stacks_common::types::chainstate::{BlockHeaderHash, ...}`)
 // keep working unchanged.
+pub use stacks_codec::address::{StacksAddress, STACKS_ADDRESS_ENCODED_SIZE};
 pub use stacks_codec::chainstate::{
     BlockHeaderHash, ConsensusHash, StacksBlockId, BLOCK_HEADER_HASH_ENCODED_SIZE,
     CONSENSUS_HASH_ENCODED_SIZE,

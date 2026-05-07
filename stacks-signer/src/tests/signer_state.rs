@@ -25,6 +25,7 @@ use clarity::types::chainstate::{
     BurnchainHeaderHash, ConsensusHash, SortitionId, StacksAddress, StacksBlockId,
     StacksPrivateKey, StacksPublicKey, TrieHash,
 };
+use clarity::types::StacksAddressExt;
 use clarity::util::get_epoch_time_secs;
 use clarity::util::hash::{Hash160, Sha512Trunc256Sum};
 use clarity::util::secp256k1::MessageSignature;

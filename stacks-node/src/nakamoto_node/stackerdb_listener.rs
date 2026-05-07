@@ -36,7 +36,7 @@ use stacks::chainstate::stacks::Error as ChainstateError;
 use stacks::codec::StacksMessageCodec;
 use stacks::net::api::postblock_proposal::ValidateRejectCode;
 use stacks::types::chainstate::{StacksAddress, StacksPublicKey};
-use stacks::types::PublicKey;
+use stacks::types::{PublicKey, StacksAddressExt};
 use stacks::util::get_epoch_time_secs;
 use stacks::util::hash::{MerkleHashFunc, Sha512Trunc256Sum};
 use stacks::util::secp256k1::MessageSignature;

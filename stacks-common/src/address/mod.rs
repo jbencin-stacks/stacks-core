@@ -88,6 +88,28 @@ impl error::Error for Error {
     }
 }
 
+/// Lifts the small `stacks_codec::c32::Error` into the full `Error` enum
+/// so c32 helpers in stacks-codec can be used with code that propagates
+/// `address::Error`.
+impl From<stacks_codec::c32::Error> for Error {
+    fn from(e: stacks_codec::c32::Error) -> Error {
+        match e {
+            stacks_codec::c32::Error::InvalidCrockford32 => Error::InvalidCrockford32,
+            stacks_codec::c32::Error::InvalidVersion(v) => Error::InvalidVersion(v),
+            stacks_codec::c32::Error::BadChecksum(a, b) => Error::BadChecksum(a, b),
+        }
+    }
+}
+
+/// Lifts `StacksAddress::new`'s narrow `InvalidStacksAddressVersion` error
+/// into the full `Error` enum so existing call sites that propagate to
+/// `address::Error` keep working.
+impl From<stacks_codec::address::InvalidStacksAddressVersion> for Error {
+    fn from(e: stacks_codec::address::InvalidStacksAddressVersion) -> Error {
+        Error::InvalidVersion(e.0)
+    }
+}
+
 /// Serialization modes for public keys to addresses.  These apply to Stacks addresses, which
 /// correspond to legacy Bitcoin addresses -- legacy Bitcoin address can be converted directly
 /// into a Stacks address, permitting a Bitcoin address to be represented directly on Stacks.

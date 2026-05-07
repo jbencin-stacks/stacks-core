@@ -1137,6 +1137,7 @@ mod tests {
     use stacks_common::deps_common::bitcoin::blockdata::transaction::{Transaction, TxOut};
     use stacks_common::deps_common::bitcoin::network::serialize::{deserialize, serialize_hex};
     use stacks_common::types::chainstate::{BlockHeaderHash, SortitionId, StacksAddress, VRFSeed};
+    use stacks_common::types::StacksAddressExt;
     use stacks_common::util::get_epoch_time_secs;
     use stacks_common::util::hash::*;
     use stacks_common::util::vrf::VRFPublicKey;

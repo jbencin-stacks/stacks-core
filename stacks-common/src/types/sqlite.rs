@@ -16,7 +16,7 @@
 
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 
-use super::chainstate::{StacksAddress, VRFSeed};
+use super::chainstate::VRFSeed;
 use crate::deps_common::bitcoin::util::hash::Sha256dHash;
 use crate::types::chainstate::{BurnchainHeaderHash, SortitionId, TrieHash};
 
@@ -37,12 +37,8 @@ impl ToSql for Sha256dHash {
     }
 }
 
-impl ToSql for StacksAddress {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        let addr_str = self.to_string();
-        Ok(addr_str.into())
-    }
-}
+// `ToSql for StacksAddress` lives in stacks-codec under its `rusqlite`
+// feature.
 
 // Implement rusqlite traits for a bunch of structs that used to be defined
 //  in the chainstate code

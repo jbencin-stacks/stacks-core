@@ -18,6 +18,7 @@ use std::time::Duration;
 use clarity::vm::types::PrincipalData;
 use stacks::core::test_util::make_stacks_transfer_serialized;
 use stacks::types::chainstate::{StacksAddress, StacksPublicKey};
+use stacks::types::StacksAddressExt;
 use stacks::util::secp256k1::Secp256k1PrivateKey;
 use stacks_signer::v0::tests::{
     TEST_REJECT_ALL_BLOCK_PROPOSAL, TEST_SIGNERS_IGNORE_BLOCK_ANNOUNCEMENT,

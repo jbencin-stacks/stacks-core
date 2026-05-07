@@ -21,6 +21,7 @@ use clarity::vm::types::QualifiedContractIdentifier;
 use rand::{thread_rng, Rng};
 use stacks_common::address::AddressHashMode;
 use stacks_common::types::chainstate::{StacksBlockId, TrieHash};
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::Address;
 use stacks_common::util::hash::Sha512Trunc256Sum;
 

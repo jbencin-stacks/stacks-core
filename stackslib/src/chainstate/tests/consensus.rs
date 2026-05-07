@@ -19,6 +19,7 @@ use clarity::boot_util::boot_code_addr;
 use clarity::codec::StacksMessageCodec;
 use clarity::consts::{CHAIN_ID_TESTNET, STACKS_EPOCH_MAX};
 use clarity::types::chainstate::{StacksAddress, StacksPrivateKey, StacksPublicKey, TrieHash};
+use clarity::types::StacksAddressExt;
 use clarity::types::{EpochList, StacksEpoch, StacksEpochId};
 use clarity::util::hash::{Hash160, MerkleTree, Sha512Trunc256Sum};
 use clarity::util::secp256k1::MessageSignature;

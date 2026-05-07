@@ -32,6 +32,7 @@ use stacks_common::address::AddressHashMode;
 use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, SortitionId, StacksAddress, StacksBlockId, VRFSeed,
 };
+use stacks_common::types::StacksAddressExt;
 use stacks_common::util::hash::to_hex;
 
 use super::SIGNERS_MAX_LIST_SIZE;

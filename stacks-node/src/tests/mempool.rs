@@ -41,6 +41,7 @@ use stacks::cost_estimates::UnitEstimator;
 use stacks::net::Error as NetError;
 use stacks_common::address::AddressHashMode;
 use stacks_common::types::chainstate::{BlockHeaderHash, StacksAddress};
+use stacks_common::types::StacksAddressExt;
 use stacks_common::util::hash::*;
 use stacks_common::util::secp256k1::*;
 

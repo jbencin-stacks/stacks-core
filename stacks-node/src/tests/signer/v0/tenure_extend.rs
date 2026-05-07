@@ -36,6 +36,7 @@ use stacks::core::test_util::{
 use stacks::core::StacksEpochId;
 use stacks::net::api::postblock_proposal::TEST_VALIDATE_DELAY_DURATION_SECS;
 use stacks::types::chainstate::{StacksAddress, StacksPublicKey};
+use stacks::types::StacksAddressExt;
 use stacks::util::get_epoch_time_secs;
 use stacks::util::hash::{hex_bytes, Hash160, Sha512Trunc256Sum};
 use stacks::util::secp256k1::Secp256k1PrivateKey;

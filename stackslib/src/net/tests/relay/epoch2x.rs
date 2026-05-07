@@ -25,7 +25,7 @@ use proptest::prelude::*;
 use rand::{thread_rng, Rng};
 use stacks_common::address::AddressHashMode;
 use stacks_common::types::chainstate::{BlockHeaderHash, StacksBlockId};
-use stacks_common::types::Address;
+use stacks_common::types::{Address, StacksAddressExt};
 use stacks_common::util::hash::{Hash160PubKeyExt, MerkleTree, Sha512Trunc256Sum};
 use stacks_common::util::vrf::VRFProof;
 

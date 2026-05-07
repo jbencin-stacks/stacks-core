@@ -27,6 +27,7 @@ use stacks::core::test_util::{make_stacks_transfer_serialized, to_addr};
 use stacks::libstackerdb::StackerDBChunkData;
 use stacks::net::api::postblock_proposal::ValidateRejectCode;
 use stacks::types::chainstate::{StacksAddress, StacksPrivateKey, StacksPublicKey};
+use stacks::types::StacksAddressExt;
 use stacks::util::get_epoch_time_secs;
 use stacks_signer::v0::tests::TEST_IGNORE_ALL_BLOCK_PROPOSALS;
 use stacks_signer::v0::SpawnedSigner;

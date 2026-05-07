@@ -18,7 +18,7 @@ use std::time::Duration;
 
 use clarity::codec::read_next;
 use clarity::types::chainstate::{StacksAddress, StacksPrivateKey, StacksPublicKey};
-use clarity::types::StacksEpochId;
+use clarity::types::{StacksAddressExt, StacksEpochId};
 use clarity::util::sleep_ms;
 use libsigner::v0::messages::{MessageSlotID, SignerMessage};
 use libsigner::SignerSession;

@@ -63,6 +63,7 @@ use stacks::net::relay::fault_injection::clear_ignore_block;
 use stacks::types::chainstate::{
     BlockHeaderHash, StacksAddress, StacksBlockId, StacksPrivateKey, StacksPublicKey,
 };
+use stacks::types::StacksAddressExt;
 use stacks::types::{PrivateKey, PublicKey};
 use stacks::util::get_epoch_time_secs;
 use stacks::util::hash::{hex_bytes, Hash160, MerkleHashFunc, Sha512Trunc256Sum};

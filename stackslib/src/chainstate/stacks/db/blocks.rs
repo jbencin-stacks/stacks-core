@@ -6852,6 +6852,7 @@ pub mod test {
     use clarity::vm::types::StacksAddressExtensions;
     use rand::{thread_rng, Rng};
     use stacks_common::types::chainstate::{BlockHeaderHash, StacksWorkScore};
+    use stacks_common::types::StacksAddressExt;
     use stacks_common::util::hash::*;
     use stacks_common::util::retry::*;
 

@@ -18,6 +18,7 @@ use clarity::vm::clarity::ClarityConnection;
 use clarity::vm::representations::*;
 use clarity::vm::{execute, Value};
 use rand::{thread_rng, Rng};
+use stacks_common::types::StacksAddressExt;
 use stacks_common::util::hash::*;
 use stacks_common::util::sleep_ms;
 use stacks_common::util::vrf::VRFProof;

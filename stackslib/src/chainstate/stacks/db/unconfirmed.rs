@@ -631,6 +631,7 @@ impl StacksChainState {
 #[cfg(test)]
 mod test {
     use clarity::vm::types::StacksAddressExtensions;
+    use stacks_common::types::StacksAddressExt;
     use stacks_common::util::hash::Hash160PubKeyExt;
 
     use super::*;

@@ -36,6 +36,7 @@ use stacks_common::types::chainstate::{
     BurnchainHeaderHash, ConsensusHash, StacksAddress, StacksBlockId, StacksPrivateKey,
     StacksPublicKey, TrieHash,
 };
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::net::PeerAddress;
 use stacks_common::types::Address;
 use stacks_common::util::hash::Sha512Trunc256Sum;

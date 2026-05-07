@@ -24,7 +24,7 @@ use std::sync::LazyLock;
 #[cfg(feature = "rusqlite")]
 pub mod sqlite;
 
-use crate::address::c32::{c32_address, c32_address_decode};
+use crate::address::c32::c32_address_decode;
 use crate::address::{
     public_keys_to_address_hash, to_bits_p2pkh, AddressHashMode,
     C32_ADDRESS_VERSION_MAINNET_MULTISIG, C32_ADDRESS_VERSION_MAINNET_SINGLESIG,
@@ -1053,23 +1053,30 @@ impl TryFrom<u32> for StacksEpochId {
     }
 }
 
-impl PartialOrd for StacksAddress {
-    fn partial_cmp(&self, other: &StacksAddress) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+// `PartialOrd` / `Ord` for `StacksAddress` are now derived in stacks-codec
+// (the manual impls produced the same lex-on-version-then-bytes ordering as
+// the auto-derive). `Display` likewise lives in stacks-codec — c32 was moved
+// along with it.
+
+/// Convenience constructors and predicates that depend on stacks-common-only
+/// types (`AddressHashMode`, `Secp256k1PublicKey`) and the c32-encoded
+/// `Address` trait. Bring this trait into scope to call e.g.
+/// `StacksAddress::burn_address(...)` / `StacksAddress::from_public_keys(...)`.
+pub trait StacksAddressExt {
+    fn is_mainnet(&self) -> bool;
+    fn burn_address(mainnet: bool) -> StacksAddress;
+    fn from_public_keys(
+        version: u8,
+        hash_mode: &AddressHashMode,
+        num_sigs: usize,
+        pubkeys: &Vec<StacksPublicKey>,
+    ) -> Option<StacksAddress>;
+    fn p2pkh(mainnet: bool, pubkey: &StacksPublicKey) -> StacksAddress;
+    fn p2pkh_from_hash(mainnet: bool, hash: Hash160) -> StacksAddress;
 }
 
-impl Ord for StacksAddress {
-    fn cmp(&self, other: &StacksAddress) -> Ordering {
-        match self.version().cmp(&other.version()) {
-            Ordering::Equal => self.bytes().cmp(other.bytes()),
-            inequality => inequality,
-        }
-    }
-}
-
-impl StacksAddress {
-    pub fn is_mainnet(&self) -> bool {
+impl StacksAddressExt for StacksAddress {
+    fn is_mainnet(&self) -> bool {
         match self.version() {
             C32_ADDRESS_VERSION_MAINNET_MULTISIG | C32_ADDRESS_VERSION_MAINNET_SINGLESIG => true,
             C32_ADDRESS_VERSION_TESTNET_MULTISIG | C32_ADDRESS_VERSION_TESTNET_SINGLESIG => false,
@@ -1077,8 +1084,8 @@ impl StacksAddress {
         }
     }
 
-    pub fn burn_address(mainnet: bool) -> StacksAddress {
-        Self::new(
+    fn burn_address(mainnet: bool) -> StacksAddress {
+        StacksAddress::new(
             if mainnet {
                 C32_ADDRESS_VERSION_MAINNET_SINGLESIG
             } else {
@@ -1086,28 +1093,21 @@ impl StacksAddress {
             },
             Hash160([0u8; 20]),
         )
-        .unwrap_or_else(|_| panic!("FATAL: constant address versions are invalid"))
-        // infallible
+        .expect("FATAL: constant address versions are invalid")
     }
 
-    /// Generate an address from a given address hash mode, signature threshold, and list of public
-    /// keys.  Only return an address if the combination given is supported.
-    /// The version is may be arbitrary.
-    pub fn from_public_keys(
+    fn from_public_keys(
         version: u8,
         hash_mode: &AddressHashMode,
         num_sigs: usize,
         pubkeys: &Vec<StacksPublicKey>,
     ) -> Option<StacksAddress> {
-        // must be sufficient public keys
         if pubkeys.len() < num_sigs {
             return None;
         }
 
-        // address hash mode must be consistent with the number of keys
         match *hash_mode {
             AddressHashMode::SerializeP2PKH | AddressHashMode::SerializeP2WPKH => {
-                // must be a single public key, and must require one signature
                 if num_sigs != 1 || pubkeys.len() != 1 {
                     return None;
                 }
@@ -1115,7 +1115,6 @@ impl StacksAddress {
             _ => {}
         }
 
-        // if segwit, then keys must all be compressed
         match *hash_mode {
             AddressHashMode::SerializeP2WPKH | AddressHashMode::SerializeP2WSH => {
                 for pubkey in pubkeys {
@@ -1131,32 +1130,19 @@ impl StacksAddress {
         StacksAddress::new(version, hash_bits).ok()
     }
 
-    /// Make a P2PKH StacksAddress
-    pub fn p2pkh(mainnet: bool, pubkey: &StacksPublicKey) -> StacksAddress {
+    fn p2pkh(mainnet: bool, pubkey: &StacksPublicKey) -> StacksAddress {
         let bytes = to_bits_p2pkh(pubkey);
         Self::p2pkh_from_hash(mainnet, bytes)
     }
 
-    /// Make a P2PKH StacksAddress
-    pub fn p2pkh_from_hash(mainnet: bool, hash: Hash160) -> StacksAddress {
+    fn p2pkh_from_hash(mainnet: bool, hash: Hash160) -> StacksAddress {
         let version = if mainnet {
             C32_ADDRESS_VERSION_MAINNET_SINGLESIG
         } else {
             C32_ADDRESS_VERSION_TESTNET_SINGLESIG
         };
-        Self::new(version, hash)
-            .unwrap_or_else(|_| panic!("FATAL: constant address versions are invalid"))
-        // infallible
-    }
-}
-
-impl std::fmt::Display for StacksAddress {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // the .unwrap_or_else() should be unreachable since StacksAddress is constructed to only
-        // accept a 5-bit value for its version
-        c32_address(self.version(), self.bytes().as_bytes())
-            .expect("Stacks version is not C32-encodable")
-            .fmt(f)
+        StacksAddress::new(version, hash)
+            .expect("FATAL: constant address versions are invalid")
     }
 }
 

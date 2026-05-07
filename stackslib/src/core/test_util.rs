@@ -20,6 +20,7 @@ use clarity::codec::StacksMessageCodec;
 use clarity::types::chainstate::{
     BlockHeaderHash, ConsensusHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
 };
+use clarity::types::StacksAddressExt;
 use clarity::vm::costs::ExecutionCost;
 use clarity::vm::tests::BurnStateDB;
 use clarity::vm::types::PrincipalData;
