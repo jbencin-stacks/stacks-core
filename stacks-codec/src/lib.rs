@@ -31,6 +31,7 @@ pub mod retry;
 pub mod secp256k1;
 pub mod signatures;
 pub mod strings;
+pub mod transaction;
 pub mod vrf;
 pub use hex::{HexDeser, HexError};
 
