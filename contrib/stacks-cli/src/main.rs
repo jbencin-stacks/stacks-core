@@ -29,6 +29,7 @@ use clarity::vm::{ClarityName, ClarityVersion, ContractName, Value};
 use clarity_cli::vm_execute;
 use stacks_common::address::{AddressHashMode, b58};
 use stacks_common::codec::{Error as CodecError, StacksMessageCodec};
+use stacks_common::types::StacksAddressExt;
 use stacks_common::types::chainstate::StacksAddress;
 use stacks_common::util::hash::{hex_bytes, to_hex};
 use stacks_common::util::retry::LogReader;

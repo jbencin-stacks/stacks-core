@@ -21,6 +21,7 @@ use blockstack_lib::chainstate::stacks::{
 use clarity::types::chainstate::{
     ConsensusHash, StacksAddress, StacksBlockId, StacksPrivateKey, StacksPublicKey,
 };
+use clarity::types::StacksAddressExt;
 use clarity::util::hash::Hash160;
 
 use crate::v0::messages::{
