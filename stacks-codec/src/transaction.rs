@@ -14,13 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Auth-tree primitive enums for the `StacksTransaction` codec. These have
-//! no separate `StacksMessageCodec` impls — they're encoded inline as
-//! single bytes (`as u8`) by the surrounding spending-condition codec.
+//! Auth-tree types for the `StacksTransaction` codec.
+
+use std::io::{Read, Write};
 
 use serde::{Deserialize, Serialize};
 
 use crate::address::AddressHashMode;
+use crate::secp256k1::Secp256k1PublicKey;
+use crate::signatures::{MessageSignature, StacksPublicKeyBuffer};
+use crate::{read_next, write_next, Error as CodecError, StacksMessageCodec};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -175,5 +178,104 @@ impl OrderIndependentMultisigHashMode {
             }
             _ => None,
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum TransactionAuthField {
+    PublicKey(Secp256k1PublicKey),
+    Signature(TransactionPublicKeyEncoding, MessageSignature),
+}
+
+impl TransactionAuthField {
+    pub fn is_public_key(&self) -> bool {
+        matches!(self, TransactionAuthField::PublicKey(_))
+    }
+
+    pub fn is_signature(&self) -> bool {
+        matches!(self, TransactionAuthField::Signature(..))
+    }
+
+    pub fn as_public_key(&self) -> Option<Secp256k1PublicKey> {
+        match *self {
+            TransactionAuthField::PublicKey(ref pubk) => Some(pubk.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_signature(&self) -> Option<(TransactionPublicKeyEncoding, MessageSignature)> {
+        match *self {
+            TransactionAuthField::Signature(ref key_fmt, ref sig) => Some((*key_fmt, sig.clone())),
+            _ => None,
+        }
+    }
+}
+
+impl StacksMessageCodec for TransactionAuthField {
+    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), CodecError> {
+        match *self {
+            TransactionAuthField::PublicKey(ref pubk) => {
+                let field_id = if pubk.compressed() {
+                    TransactionAuthFieldID::PublicKeyCompressed
+                } else {
+                    TransactionAuthFieldID::PublicKeyUncompressed
+                };
+
+                let pubkey_buf = StacksPublicKeyBuffer::from_public_key(pubk);
+
+                write_next(fd, &(field_id as u8))?;
+                write_next(fd, &pubkey_buf)?;
+            }
+            TransactionAuthField::Signature(ref key_encoding, ref sig) => {
+                let field_id = if *key_encoding == TransactionPublicKeyEncoding::Compressed {
+                    TransactionAuthFieldID::SignatureCompressed
+                } else {
+                    TransactionAuthFieldID::SignatureUncompressed
+                };
+
+                write_next(fd, &(field_id as u8))?;
+                write_next(fd, sig)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn consensus_deserialize<R: Read>(fd: &mut R) -> Result<TransactionAuthField, CodecError> {
+        let field_id: u8 = read_next(fd)?;
+        let field = match field_id {
+            x if x == TransactionAuthFieldID::PublicKeyCompressed as u8 => {
+                let pubkey_buf: StacksPublicKeyBuffer = read_next(fd)?;
+                let mut pubkey = pubkey_buf
+                    .to_public_key()
+                    .map_err(|e| CodecError::DeserializeError(e.into()))?;
+                pubkey.set_compressed(true);
+
+                TransactionAuthField::PublicKey(pubkey)
+            }
+            x if x == TransactionAuthFieldID::PublicKeyUncompressed as u8 => {
+                let pubkey_buf: StacksPublicKeyBuffer = read_next(fd)?;
+                let mut pubkey = pubkey_buf
+                    .to_public_key()
+                    .map_err(|e| CodecError::DeserializeError(e.into()))?;
+                pubkey.set_compressed(false);
+
+                TransactionAuthField::PublicKey(pubkey)
+            }
+            x if x == TransactionAuthFieldID::SignatureCompressed as u8 => {
+                let sig: MessageSignature = read_next(fd)?;
+                TransactionAuthField::Signature(TransactionPublicKeyEncoding::Compressed, sig)
+            }
+            x if x == TransactionAuthFieldID::SignatureUncompressed as u8 => {
+                let sig: MessageSignature = read_next(fd)?;
+                TransactionAuthField::Signature(TransactionPublicKeyEncoding::Uncompressed, sig)
+            }
+            _ => {
+                return Err(CodecError::DeserializeError(format!(
+                    "Failed to parse auth field: unkonwn auth field ID {}",
+                    field_id
+                )));
+            }
+        };
+        Ok(field)
     }
 }
