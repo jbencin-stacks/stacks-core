@@ -58,6 +58,7 @@ rand = ["dep:rand"]
 # Off by default so the published crate doesn't pull in rusqlite.
 rusqlite = ["dep:rusqlite"]
 serde = []
+testing = ["rand"]
 
 # Wasm-specific features for easier configuration
 wasm-web = ["rand", "getrandom/js", "libsecp256k1/static-context"]

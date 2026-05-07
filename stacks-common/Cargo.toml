@@ -95,15 +95,15 @@ slog_json = ["slog-json"]
 rusqlite = ["dep:rusqlite", "stacks-codec/rusqlite", "rand"]
 # Enables the rand module. This flag must be off on deterministic
 # platforms such as CosmWasm
-rand = ["dep:rand"]
+rand = ["dep:rand", "stacks-codec/rand"]
 serde = []
-testing = ["rand"]
+testing = ["rand", "stacks-codec/testing"]
 bech32_std = []
 bech32_strict = []
 
 # Wasm-specific features for easier configuration
-wasm-web = ["rand", "getrandom/js", "libsecp256k1/static-context"]
-wasm-deterministic = ["getrandom/custom"]
+wasm-web = ["rand", "getrandom/js", "libsecp256k1/static-context", "stacks-codec/wasm-web"]
+wasm-deterministic = ["getrandom/custom", "stacks-codec/wasm-deterministic"]
 
 [package.metadata.pinny]
 allowed = ["t_prop"]

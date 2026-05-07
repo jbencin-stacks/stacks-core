@@ -18,8 +18,7 @@ pub const MESSAGE_SIGNATURE_ENCODED_SIZE: u32 = 65;
 
 /// A container for compressed secp256k1 public keys (the wire-format pubkey:
 /// always 33 bytes). Conversions to/from the in-memory `Secp256k1PublicKey`
-/// type live in stacks-common as `StacksPublicKeyBufferExt` (those depend on
-/// the active secp256k1 crate, which stacks-codec doesn't dictate).
+/// are inherent methods defined in `secp256k1::mod`.
 pub struct StacksPublicKeyBuffer(pub [u8; 33]);
 crate::impl_array_newtype!(StacksPublicKeyBuffer, u8, 33);
 crate::impl_array_hexstring_fmt!(StacksPublicKeyBuffer);

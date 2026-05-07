@@ -30,7 +30,7 @@ use stacks_common::codec::{
 };
 use stacks_common::types::chainstate::{BlockHeaderHash, BurnchainHeaderHash};
 use stacks_common::types::net::PeerAddress;
-use stacks_common::types::{StacksPublicKeyBuffer, StacksPublicKeyBufferExt};
+use stacks_common::types::StacksPublicKeyBuffer;
 use stacks_common::util::hash::{to_hex, Hash160, Hash160PubKeyExt};
 use stacks_common::util::retry::BoundReader;
 use stacks_common::util::secp256k1::{MessageSignature, Secp256k1PrivateKey, Secp256k1PublicKey};

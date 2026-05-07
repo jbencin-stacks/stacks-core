@@ -39,7 +39,6 @@ use crate::consts::{
 };
 use crate::types::chainstate::{StacksAddress, StacksPublicKey};
 use crate::util::hash::Hash160;
-use crate::util::secp256k1::{MessageSignature, Secp256k1PublicKey};
 
 pub mod chainstate;
 pub mod net;
@@ -49,47 +48,15 @@ pub mod tests;
 
 // `StacksPublicKeyBuffer` lives in `stacks-codec` (it's the wire-format
 // pubkey used by the StacksTransaction codec). Re-export so existing call
-// sites (`stacks_common::types::StacksPublicKeyBuffer`) keep working.
+// sites (`stacks_common::types::StacksPublicKeyBuffer`) keep working. The
+// `from_public_key` / `to_public_key` conversion methods (previously the
+// `StacksPublicKeyBufferExt` trait) are inherent on the type now that
+// `Secp256k1PublicKey` lives alongside it in stacks-codec.
+// `PublicKey` and `PrivateKey` traits live in stacks-codec (they only depend
+// on `MessageSignature` which is also there). Re-exported so existing call
+// sites (`stacks_common::types::{PublicKey, PrivateKey}`) keep working.
+pub use stacks_codec::keys::{PrivateKey, PublicKey};
 pub use stacks_codec::signatures::StacksPublicKeyBuffer;
-
-/// Conversions between `StacksPublicKeyBuffer` and the in-memory
-/// `Secp256k1PublicKey` (defined here in stacks-common). Bring this trait
-/// into scope to call `StacksPublicKeyBuffer::from_public_key(...)` /
-/// `.to_public_key()`.
-pub trait StacksPublicKeyBufferExt {
-    fn from_public_key(pubkey: &Secp256k1PublicKey) -> StacksPublicKeyBuffer;
-    fn to_public_key(&self) -> Result<Secp256k1PublicKey, &'static str>;
-}
-
-impl StacksPublicKeyBufferExt for StacksPublicKeyBuffer {
-    fn from_public_key(pubkey: &Secp256k1PublicKey) -> StacksPublicKeyBuffer {
-        let pubkey_bytes_vec = pubkey.to_bytes_compressed();
-        let mut pubkey_bytes = [0u8; 33];
-        pubkey_bytes.copy_from_slice(&pubkey_bytes_vec[..]);
-        StacksPublicKeyBuffer(pubkey_bytes)
-    }
-
-    fn to_public_key(&self) -> Result<Secp256k1PublicKey, &'static str> {
-        Secp256k1PublicKey::from_slice(&self.0)
-            .map_err(|_e_str| "Failed to decode Stacks public key")
-    }
-}
-
-pub trait PublicKey: Clone + fmt::Debug + serde::Serialize + serde::de::DeserializeOwned {
-    fn to_bytes(&self) -> Vec<u8>;
-    fn verify(&self, data_hash: &[u8], sig: &MessageSignature) -> Result<bool, &'static str>;
-}
-
-pub trait PrivateKey: Clone + fmt::Debug + serde::Serialize + serde::de::DeserializeOwned {
-    fn to_bytes(&self) -> Vec<u8>;
-    fn sign(&self, data_hash: &[u8]) -> Result<MessageSignature, &'static str>;
-    #[cfg(any(test, feature = "testing"))]
-    fn sign_with_noncedata(
-        &self,
-        data_hash: &[u8],
-        noncedata: &[u8; 32],
-    ) -> Result<MessageSignature, &'static str>;
-}
 
 pub trait Address: Clone + fmt::Debug + fmt::Display {
     fn to_bytes(&self) -> Vec<u8>;

@@ -1,5 +1,5 @@
 // Copyright (C) 2013-2020 Blockstack PBC, a public benefit corporation
-// Copyright (C) 2020 Stacks Open Internet Foundation
+// Copyright (C) 2020-2026 Stacks Open Internet Foundation
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,25 +22,14 @@ use ::libsecp256k1::{
 };
 #[cfg(not(feature = "wasm-deterministic"))]
 use ::libsecp256k1::{Error as LibSecp256k1Error, Message as LibSecp256k1Message};
-use serde::de::{Deserialize, Error as de_Error};
-use serde::Serialize;
+use serde::de::Error as de_Error;
+use serde::{Deserialize, Serialize};
 
-use super::MessageSignature;
-use crate::types::{PrivateKey, PublicKey};
-use crate::util::hash::{hex_bytes, to_hex};
+use crate::hex::{hex_bytes, to_hex};
+use crate::keys::{PrivateKey, PublicKey};
+use crate::signatures::MessageSignature;
 
 pub const PUBLIC_KEY_SIZE: usize = 33;
-
-/// Conversion between `MessageSignature` and the wasm `libsecp256k1` crate's
-/// `Signature` + `RecoveryId`. Same role as the native variant (defined in
-/// `native.rs`); kept target-specific because the underlying types differ.
-pub trait MessageSignatureSecpExt {
-    fn from_secp256k1_recoverable(
-        sig: &LibSecp256k1Signature,
-        recid: LibSecp256k1RecoveryId,
-    ) -> MessageSignature;
-    fn to_secp256k1_recoverable(&self) -> Option<(LibSecp256k1Signature, LibSecp256k1RecoveryId)>;
-}
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Secp256k1PublicKey {
@@ -268,8 +257,12 @@ fn secp256k1_privkey_deserialize<'de, D: serde::Deserializer<'de>>(
     LibSecp256k1PrivateKey::parse_slice(&key_bytes[..]).map_err(de_Error::custom)
 }
 
-impl MessageSignatureSecpExt for MessageSignature {
-    fn from_secp256k1_recoverable(
+/// Conversions between `MessageSignature` and the wasm `libsecp256k1` crate's
+/// `Signature` + `RecoveryId`. Same role as the native variant; previously
+/// behind the `MessageSignatureSecpExt` ext-trait while the type lived in a
+/// different crate.
+impl MessageSignature {
+    pub fn from_secp256k1_recoverable(
         sig: &LibSecp256k1Signature,
         recid: LibSecp256k1RecoveryId,
     ) -> MessageSignature {
@@ -281,7 +274,9 @@ impl MessageSignatureSecpExt for MessageSignature {
         MessageSignature(ret_bytes)
     }
 
-    fn to_secp256k1_recoverable(&self) -> Option<(LibSecp256k1Signature, LibSecp256k1RecoveryId)> {
+    pub fn to_secp256k1_recoverable(
+        &self,
+    ) -> Option<(LibSecp256k1Signature, LibSecp256k1RecoveryId)> {
         let recovery_id = match LibSecp256k1RecoveryId::parse(self.0[0]) {
             Ok(rid) => rid,
             Err(_) => {
@@ -336,8 +331,8 @@ impl PrivateKey for Secp256k1PrivateKey {
     #[cfg(all(feature = "wasm-deterministic", any(test, feature = "testing")))]
     fn sign_with_noncedata(
         &self,
-        data_hash: &[u8],
-        noncedata: &[u8; 32],
+        _data_hash: &[u8],
+        _noncedata: &[u8; 32],
     ) -> Result<MessageSignature, &'static str> {
         Err("Not implemented for wasm-deterministic")
     }

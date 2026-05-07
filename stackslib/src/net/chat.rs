@@ -22,7 +22,7 @@ use std::{cmp, mem};
 use clarity::vm::types::QualifiedContractIdentifier;
 use rand::{self, thread_rng, Rng};
 use stacks_common::types::net::PeerAddress;
-use stacks_common::types::{StacksPublicKeyBuffer, StacksPublicKeyBufferExt};
+use stacks_common::types::StacksPublicKeyBuffer;
 use stacks_common::util::hash::{to_hex, Hash160PubKeyExt};
 use stacks_common::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 use stacks_common::util::{get_epoch_time_ms, get_epoch_time_secs};

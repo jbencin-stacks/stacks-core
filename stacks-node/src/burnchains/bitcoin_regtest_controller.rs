@@ -63,7 +63,7 @@ use stacks_common::deps_common::bitcoin::network::serialize::{serialize, seriali
 use stacks_common::deps_common::bitcoin::util::hash::Sha256dHash;
 use stacks_common::types::chainstate::BurnchainHeaderHash;
 use stacks_common::util::hash::{hex_bytes, Hash160};
-use stacks_common::util::secp256k1::{MessageSignatureSecpExt, Secp256k1PublicKey};
+use stacks_common::util::secp256k1::Secp256k1PublicKey;
 use stacks_common::util::sleep_ms;
 
 use super::super::operations::BurnchainOpSigner;

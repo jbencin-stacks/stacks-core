@@ -153,9 +153,7 @@ pub(crate) mod tests {
     use stacks_common::types::chainstate::{
         BlockHeaderHash, ConsensusHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
     };
-    use stacks_common::types::{
-        StacksAddressExt, StacksEpochId, StacksPublicKeyBuffer, StacksPublicKeyBufferExt,
-    };
+    use stacks_common::types::{StacksAddressExt, StacksEpochId, StacksPublicKeyBuffer};
     use stacks_common::util::hash::{Hash160, Hash160PubKeyExt, Sha256Sum};
 
     use super::*;
