@@ -152,6 +152,7 @@ impl fmt::Debug for StandardPrincipalData {
 impl From<&StacksPrivateKey> for StandardPrincipalData {
     fn from(o: &StacksPrivateKey) -> StandardPrincipalData {
         use stacks_common::address::{AddressHashMode, C32_ADDRESS_VERSION_TESTNET_SINGLESIG};
+        use stacks_common::types::StacksAddressExt;
         use stacks_common::types::chainstate::StacksPublicKey;
 
         let stacks_addr = StacksAddress::from_public_keys(

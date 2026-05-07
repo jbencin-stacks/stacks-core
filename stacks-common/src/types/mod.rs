@@ -1141,8 +1141,7 @@ impl StacksAddressExt for StacksAddress {
         } else {
             C32_ADDRESS_VERSION_TESTNET_SINGLESIG
         };
-        StacksAddress::new(version, hash)
-            .expect("FATAL: constant address versions are invalid")
+        StacksAddress::new(version, hash).expect("FATAL: constant address versions are invalid")
     }
 }
 

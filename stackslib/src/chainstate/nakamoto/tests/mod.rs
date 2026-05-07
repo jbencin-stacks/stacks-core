@@ -33,8 +33,7 @@ use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, ConsensusHash, StacksAddress, StacksPrivateKey,
     StacksPublicKey, StacksWorkScore, TrieHash, VRFSeed,
 };
-use stacks_common::types::StacksAddressExt;
-use stacks_common::types::{Address, PrivateKey, StacksEpoch, StacksEpochId};
+use stacks_common::types::{Address, PrivateKey, StacksAddressExt, StacksEpoch, StacksEpochId};
 use stacks_common::util::get_epoch_time_secs;
 use stacks_common::util::hash::{
     hex_bytes, Hash160, Hash160PubKeyExt, MerkleTree, Sha512Trunc256Sum,

@@ -30,9 +30,9 @@ use clarity::vm::types::{
 };
 
 use crate::chainstate::nakamoto::miner::MinerTenureInfoCause;
+use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
 use crate::chainstate::stacks::db::*;
 use crate::chainstate::stacks::miner::TransactionResult;
-use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
 use crate::chainstate::stacks::{Error, StacksMicroblockHeader};
 use crate::clarity_vm::clarity::{ClarityConnection, ClarityError, ClarityTransactionConnection};
 use crate::monitoring::increment_unreachable_errors_counter;
@@ -1764,7 +1764,6 @@ impl StacksChainState {
 pub mod test {
     use clarity::util::secp256k1::Secp256k1PrivateKey;
     use clarity::vm::representations::{ClarityName, ContractName};
-    use stacks_common::types::StacksAddressExt;
     use clarity::vm::test_util::{UnitTestBurnStateDB, TEST_BURN_STATE_DB};
     use clarity::vm::tests::TEST_HEADER_DB;
     use clarity::vm::types::ResponseData;
@@ -1773,6 +1772,7 @@ pub mod test {
     use rand::Rng;
     use rstest::rstest;
     use stacks_common::types::chainstate::SortitionId;
+    use stacks_common::types::StacksAddressExt;
     use stacks_common::util::hash::*;
 
     use super::*;

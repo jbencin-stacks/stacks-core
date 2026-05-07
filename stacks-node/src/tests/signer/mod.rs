@@ -50,8 +50,7 @@ use stacks::net::api::postblock_proposal::{
     BlockValidateOk, BlockValidateReject, BlockValidateResponse,
 };
 use stacks::types::chainstate::{StacksAddress, StacksBlockId, StacksPublicKey};
-use stacks::types::StacksAddressExt;
-use stacks::types::PrivateKey;
+use stacks::types::{PrivateKey, StacksAddressExt};
 use stacks::util::get_epoch_time_secs;
 use stacks::util::hash::MerkleHashFunc;
 use stacks::util::secp256k1::{MessageSignature, Secp256k1PublicKey};

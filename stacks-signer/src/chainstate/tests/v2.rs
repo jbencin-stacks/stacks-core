@@ -30,8 +30,7 @@ use blockstack_lib::chainstate::stacks::{
 use blockstack_lib::core::test_util::make_stacks_transfer_tx;
 use blockstack_lib::net::api::get_tenures_fork_info::TenureForkingInfo;
 use clarity::types::chainstate::{BurnchainHeaderHash, SortitionId, StacksAddress};
-use clarity::types::StacksAddressExt;
-use clarity::types::PrivateKey;
+use clarity::types::{PrivateKey, StacksAddressExt};
 use clarity::util::secp256k1::Secp256k1PublicKey;
 use clarity::util::vrf::VRFProof;
 use libsigner::v0::messages::RejectReason;

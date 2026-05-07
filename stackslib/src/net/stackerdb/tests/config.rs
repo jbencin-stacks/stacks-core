@@ -20,8 +20,7 @@ use stacks_common::address::AddressHashMode;
 use stacks_common::types::chainstate::{
     BurnchainHeaderHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
 };
-use stacks_common::types::StacksAddressExt;
-use stacks_common::types::StacksEpoch;
+use stacks_common::types::{StacksAddressExt, StacksEpoch};
 use stacks_common::util::hash::Hash160;
 
 use crate::burnchains::Burnchain;

@@ -85,11 +85,7 @@ impl VRFProof {
     /// Returns `None` if `c` doesn't satisfy `check_c`.
     /// (Originally returned `Result<_, vrf::Error>` before the move; the
     /// only caller — `VRF::prove` in stacks-common — was updated.)
-    pub fn new(
-        Gamma: EdwardsPoint,
-        c: ed25519_Scalar,
-        s: ed25519_Scalar,
-    ) -> Option<VRFProof> {
+    pub fn new(Gamma: EdwardsPoint, c: ed25519_Scalar, s: ed25519_Scalar) -> Option<VRFProof> {
         if !VRFProof::check_c(&c) {
             return None;
         }
@@ -179,14 +175,14 @@ impl serde::Serialize for VRFProof {
 impl<'de> serde::Deserialize<'de> for VRFProof {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<VRFProof, D::Error> {
         let inst_str = String::deserialize(d)?;
-        VRFProof::from_hex(&inst_str)
-            .ok_or_else(|| serde::de::Error::custom("Invalid VRF proof"))
+        VRFProof::from_hex(&inst_str).ok_or_else(|| serde::de::Error::custom("Invalid VRF proof"))
     }
 }
 
 impl StacksMessageCodec for VRFProof {
     fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), CodecError> {
-        fd.write_all(&self.to_bytes()).map_err(CodecError::WriteError)
+        fd.write_all(&self.to_bytes())
+            .map_err(CodecError::WriteError)
     }
 
     fn consensus_deserialize<R: Read>(fd: &mut R) -> Result<VRFProof, CodecError> {
@@ -204,12 +200,10 @@ mod rusqlite_impls {
     use crate::hex::hex_bytes;
 
     impl rusqlite::types::FromSql for VRFProof {
-        fn column_result(
-            value: rusqlite::types::ValueRef,
-        ) -> rusqlite::types::FromSqlResult<Self> {
+        fn column_result(value: rusqlite::types::ValueRef) -> rusqlite::types::FromSqlResult<Self> {
             let hex_str = value.as_str()?;
-            let byte_str = hex_bytes(hex_str)
-                .map_err(|_e| rusqlite::types::FromSqlError::InvalidType)?;
+            let byte_str =
+                hex_bytes(hex_str).map_err(|_e| rusqlite::types::FromSqlError::InvalidType)?;
             let inst = VRFProof::from_bytes(&byte_str)
                 .ok_or(rusqlite::types::FromSqlError::InvalidType)?;
             Ok(inst)

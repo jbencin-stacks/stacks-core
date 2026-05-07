@@ -1228,10 +1228,9 @@ pub mod test {
     use stacks_common::util::get_epoch_time_secs;
     use stacks_common::util::hash::*;
 
-    use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
-
     use super::*;
     use crate::chainstate::nakamoto::{NakamotoBlock, NakamotoBlockHeader};
+    use crate::chainstate::stacks::block::StacksMicroblockHeaderExt;
     use crate::chainstate::stacks::StacksPublicKey as PubKey;
     use crate::core::*;
 

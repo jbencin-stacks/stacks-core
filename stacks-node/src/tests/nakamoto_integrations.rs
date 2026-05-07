@@ -106,10 +106,9 @@ use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
     TrieHash,
 };
-use stacks_common::types::StacksAddressExt;
 use stacks_common::types::{
     set_test_coinbase_schedule, set_test_sip_031_emission_schedule, CoinbaseInterval,
-    SIP031EmissionInterval, StacksPublicKeyBuffer,
+    SIP031EmissionInterval, StacksAddressExt, StacksPublicKeyBuffer,
 };
 use stacks_common::util::hash::{to_hex, Hash160, Hash160PubKeyExt, Sha512Trunc256Sum};
 use stacks_common::util::secp256k1::{MessageSignature, Secp256k1PrivateKey, Secp256k1PublicKey};

@@ -55,10 +55,7 @@ impl StacksAddress {
     /// Construct a [`StacksAddress`] from raw components. Returns
     /// `Err(InvalidStacksAddressVersion(version))` if `version >= 32`
     /// (c32 only encodes 5-bit version bytes).
-    pub fn new(
-        version: u8,
-        hash: Hash160,
-    ) -> Result<StacksAddress, InvalidStacksAddressVersion> {
+    pub fn new(version: u8, hash: Hash160) -> Result<StacksAddress, InvalidStacksAddressVersion> {
         if version >= 32 {
             return Err(InvalidStacksAddressVersion(version));
         }
