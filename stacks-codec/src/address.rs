@@ -23,11 +23,79 @@ use crate::c32::{c32_address, Error as C32Error};
 use crate::hash::{Hash160, HASH160_ENCODED_SIZE};
 use crate::{read_next, write_next, Error as CodecError, StacksMessageCodec};
 
-/// Error type for `StacksAddress::new`. The original returned
-/// `stacks_common::address::Error`, which has many c32-specific variants;
-/// this enum carries only what's relevant for the constructor. Stacks-common
-/// provides `From<InvalidStacksAddressVersion> for address::Error` so
-/// existing `?` propagation through `address::Error` keeps working.
+pub const C32_ADDRESS_VERSION_MAINNET_SINGLESIG: u8 = 22; // P
+pub const C32_ADDRESS_VERSION_MAINNET_MULTISIG: u8 = 20; // M
+pub const C32_ADDRESS_VERSION_TESTNET_SINGLESIG: u8 = 26; // T
+pub const C32_ADDRESS_VERSION_TESTNET_MULTISIG: u8 = 21; // N
+
+/// Serialization modes for public keys to addresses.  These apply to Stacks addresses, which
+/// correspond to legacy Bitcoin addresses -- legacy Bitcoin address can be converted directly
+/// into a Stacks address, permitting a Bitcoin address to be represented directly on Stacks.
+/// These *do not apply* to Bitcoin segwit addresses.
+#[repr(u8)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Hash, Eq, Copy, Serialize, Deserialize)]
+pub enum AddressHashMode {
+    // We support four different modes due to legacy compatibility with Stacks v1 addresses:
+    SerializeP2PKH = 0x00,  // hash160(public-key), same as bitcoin's p2pkh
+    SerializeP2SH = 0x01,   // hash160(multisig-redeem-script), same as bitcoin's multisig p2sh
+    SerializeP2WPKH = 0x02, // hash160(segwit-program-00(p2pkh)), same as bitcoin's p2sh-p2wpkh
+    SerializeP2WSH = 0x03,  // hash160(segwit-program-00(public-keys)), same as bitcoin's p2sh-p2wsh
+}
+
+impl AddressHashMode {
+    pub fn to_version_mainnet(&self) -> u8 {
+        match *self {
+            AddressHashMode::SerializeP2PKH => C32_ADDRESS_VERSION_MAINNET_SINGLESIG,
+            _ => C32_ADDRESS_VERSION_MAINNET_MULTISIG,
+        }
+    }
+
+    pub fn to_version_testnet(&self) -> u8 {
+        match *self {
+            AddressHashMode::SerializeP2PKH => C32_ADDRESS_VERSION_TESTNET_SINGLESIG,
+            _ => C32_ADDRESS_VERSION_TESTNET_MULTISIG,
+        }
+    }
+
+    /// WARNING: this does not support segwit-p2sh!
+    pub fn from_version(version: u8) -> AddressHashMode {
+        match version {
+            C32_ADDRESS_VERSION_TESTNET_SINGLESIG | C32_ADDRESS_VERSION_MAINNET_SINGLESIG => {
+                AddressHashMode::SerializeP2PKH
+            }
+            _ => AddressHashMode::SerializeP2SH,
+        }
+    }
+}
+
+/// Given the u8 of an AddressHashMode, deduce the AddressHashNode. Returns
+/// `Err(InvalidStacksAddressVersion(value))` for an out-of-range byte. The
+/// upstream version returned `stacks_common::address::Error` which carries
+/// many c32 variants; stacks-common provides
+/// `From<InvalidStacksAddressVersion> for address::Error` so existing `?`
+/// propagation keeps working.
+impl TryFrom<u8> for AddressHashMode {
+    type Error = InvalidStacksAddressVersion;
+
+    fn try_from(value: u8) -> Result<AddressHashMode, Self::Error> {
+        match value {
+            x if x == AddressHashMode::SerializeP2PKH as u8 => Ok(AddressHashMode::SerializeP2PKH),
+            x if x == AddressHashMode::SerializeP2SH as u8 => Ok(AddressHashMode::SerializeP2SH),
+            x if x == AddressHashMode::SerializeP2WPKH as u8 => {
+                Ok(AddressHashMode::SerializeP2WPKH)
+            }
+            x if x == AddressHashMode::SerializeP2WSH as u8 => Ok(AddressHashMode::SerializeP2WSH),
+            _ => Err(InvalidStacksAddressVersion(value)),
+        }
+    }
+}
+
+/// Error type for `StacksAddress::new` and `AddressHashMode::try_from`. The
+/// original `TryFrom` returned `stacks_common::address::Error`, which has
+/// many c32-specific variants; this enum carries only what's relevant for
+/// the constructor. Stacks-common provides
+/// `From<InvalidStacksAddressVersion> for address::Error` so existing `?`
+/// propagation through `address::Error` keeps working.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct InvalidStacksAddressVersion(pub u8);
 
