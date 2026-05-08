@@ -37,7 +37,7 @@ use crate::chainstate::nakamoto::{
 use crate::chainstate::stacks::{
     CoinbasePayload, Error as ChainstateError, StacksTransaction, TenureChangeCause,
     TenureChangePayload, TokenTransferMemo, TransactionAnchorMode, TransactionAuth,
-    TransactionPayload, TransactionVersion,
+    TransactionAuthExt, TransactionPayload, TransactionVersion,
 };
 use crate::clarity::vm::types::StacksAddressExtensions;
 use crate::core::test_util::to_addr;

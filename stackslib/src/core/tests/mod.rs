@@ -50,8 +50,8 @@ use crate::chainstate::stacks::test::codec_all_transactions;
 use crate::chainstate::stacks::{
     Error as ChainstateError, SinglesigHashMode, SinglesigSpendingCondition, StacksBlockHeader,
     StacksPrivateKey, StacksTransaction, TokenTransferMemo, TransactionAnchorMode, TransactionAuth,
-    TransactionPayload, TransactionPostConditionMode, TransactionPublicKeyEncoding,
-    TransactionSpendingCondition, TransactionVersion,
+    TransactionAuthExt, TransactionPayload, TransactionPostConditionMode,
+    TransactionPublicKeyEncoding, TransactionSpendingCondition, TransactionVersion,
 };
 use crate::core::mempool::{
     db_get_all_nonces, MemPoolSyncData, MemPoolWalkSettings, MemPoolWalkTxTypes, TxTag,

@@ -58,8 +58,8 @@ use crate::chainstate::stacks::events::TransactionOrigin;
 use crate::chainstate::stacks::tests::TestStacksNode;
 use crate::chainstate::stacks::{
     Error as ChainstateError, StacksTransaction, StacksTransactionSigner, TenureChangeCause,
-    TokenTransferMemo, TransactionAnchorMode, TransactionAuth, TransactionPayload,
-    TransactionSmartContract, TransactionVersion,
+    TokenTransferMemo, TransactionAnchorMode, TransactionAuth, TransactionAuthExt,
+    TransactionPayload, TransactionSmartContract, TransactionVersion,
 };
 use crate::chainstate::tests::TestChainstateConfig;
 use crate::clarity::vm::types::StacksAddressExtensions;

@@ -59,8 +59,8 @@ use crate::chainstate::stacks::events::TransactionOrigin;
 use crate::chainstate::stacks::test::make_codec_test_microblock;
 use crate::chainstate::stacks::{
     StacksTransaction, StacksTransactionSigner, TenureChangeCause, TenureChangePayload,
-    TokenTransferMemo, TransactionAnchorMode, TransactionAuth, TransactionContractCall,
-    TransactionPayload, TransactionVersion,
+    TokenTransferMemo, TransactionAnchorMode, TransactionAuth, TransactionAuthExt,
+    TransactionContractCall, TransactionPayload, TransactionVersion,
 };
 use crate::chainstate::tests::{TestChainstate, TestChainstateConfig};
 use crate::clarity::vm::types::StacksAddressExtensions;

@@ -22,8 +22,8 @@ use stacks_common::types::StacksAddressExt;
 
 use super::TestRPC;
 use crate::chainstate::stacks::{
-    StacksTransaction, StacksTransactionSigner, TransactionAuth, TransactionPayload,
-    TransactionVersion,
+    StacksTransaction, StacksTransactionSigner, TransactionAuth, TransactionAuthExt,
+    TransactionPayload, TransactionVersion,
 };
 use crate::net::api::posttransaction;
 use crate::net::connection::ConnectionOptions;

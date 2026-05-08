@@ -70,8 +70,8 @@ use crate::chainstate::stacks::db::{
 use crate::chainstate::stacks::{
     CoinbasePayload, Error as ChainstateError, StacksBlock, StacksBlockHeader, StacksTransaction,
     TenureChangeCause, TenureChangePayload, TokenTransferMemo, TransactionAnchorMode,
-    TransactionAuth, TransactionContractCall, TransactionPayload, TransactionPostConditionMode,
-    TransactionSmartContract, TransactionVersion,
+    TransactionAuth, TransactionAuthExt, TransactionContractCall, TransactionPayload,
+    TransactionPostConditionMode, TransactionSmartContract, TransactionVersion,
 };
 use crate::core::{StacksEpochExtension, STACKS_EPOCH_3_0_MARKER};
 use crate::net::codec::test::check_codec_and_corruption;

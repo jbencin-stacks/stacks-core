@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::io::{Read, Write};
-
 use stacks_common::address::AddressHashMode;
-use stacks_common::codec::{read_next, write_next, Error as codec_error, StacksMessageCodec};
 use stacks_common::types::chainstate::StacksAddress;
 use stacks_common::types::{StacksAddressExt, StacksEpochId};
 use stacks_common::util::secp256k1::MessageSignature;
@@ -522,122 +519,83 @@ impl TransactionSpendingConditionExt for TransactionSpendingCondition {
     }
 }
 
-impl StacksMessageCodec for TransactionAuth {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
-        match *self {
-            TransactionAuth::Standard(ref origin_condition) => {
-                write_next(fd, &(TransactionAuthFlags::AuthStandard as u8))?;
-                write_next(fd, origin_condition)?;
-            }
-            TransactionAuth::Sponsored(ref origin_condition, ref sponsor_condition) => {
-                write_next(fd, &(TransactionAuthFlags::AuthSponsored as u8))?;
-                write_next(fd, origin_condition)?;
-                write_next(fd, sponsor_condition)?;
-            }
-        }
-        Ok(())
-    }
+// `TransactionAuth`'s `StacksMessageCodec` impl and pure inherent methods
+// (constructors using already-moved types, accessors, `clear`,
+// `into_*sighash_auth`, ...) live in stacks-codec. The `from_*`
+// constructors (which use `StacksAddress::from_public_keys`),
+// `set_sponsor`/`set_sponsor_nonce` (returning stackslib `Error`),
+// `verify`/`verify_origin` (returning `net_error`), and
+// `is_supported_in_epoch` (using `StacksEpochId`) are expressed as the
+// `TransactionAuthExt` trait below.
 
-    fn consensus_deserialize<R: Read>(fd: &mut R) -> Result<TransactionAuth, codec_error> {
-        let type_id: u8 = read_next(fd)?;
-        let auth = match type_id {
-            x if x == TransactionAuthFlags::AuthStandard as u8 => {
-                let origin_auth: TransactionSpendingCondition = read_next(fd)?;
-                TransactionAuth::Standard(origin_auth)
-            }
-            x if x == TransactionAuthFlags::AuthSponsored as u8 => {
-                let origin_auth: TransactionSpendingCondition = read_next(fd)?;
-                let sponsor_auth: TransactionSpendingCondition = read_next(fd)?;
-                TransactionAuth::Sponsored(origin_auth, sponsor_auth)
-            }
-            _ => {
-                test_debug!("Unrecognized transaction auth flags {:?}", type_id);
-                return Err(codec_error::DeserializeError(format!(
-                    "Failed to parse transaction authorization: unrecognized auth flags {}",
-                    type_id
-                )));
-            }
-        };
-        Ok(auth)
-    }
+pub trait TransactionAuthExt {
+    fn from_p2pkh(privk: &StacksPrivateKey) -> Option<TransactionAuth>;
+    fn from_p2sh(privks: &[StacksPrivateKey], num_sigs: u16) -> Option<TransactionAuth>;
+    fn from_order_independent_p2sh(
+        privks: &[StacksPrivateKey],
+        num_sigs: u16,
+    ) -> Option<TransactionAuth>;
+    fn from_order_independent_p2wsh(
+        privks: &[StacksPrivateKey],
+        num_sigs: u16,
+    ) -> Option<TransactionAuth>;
+    fn from_p2wpkh(privk: &StacksPrivateKey) -> Option<TransactionAuth>;
+    fn from_p2wsh(privks: &[StacksPrivateKey], num_sigs: u16) -> Option<TransactionAuth>;
+    /// Directly set the sponsor spending condition.
+    fn set_sponsor(
+        &mut self,
+        sponsor_spending_cond: TransactionSpendingCondition,
+    ) -> Result<(), Error>;
+    fn set_sponsor_nonce(&mut self, n: u64) -> Result<(), Error>;
+    fn verify_origin(&self, initial_sighash: &Txid) -> Result<Txid, net_error>;
+    fn verify(&self, initial_sighash: &Txid) -> Result<(), net_error>;
+    /// Checks if this `TransactionAuth` is supported in the passed epoch.
+    /// OrderIndependent multisig is not supported before epoch 3.0.
+    fn is_supported_in_epoch(&self, epoch_id: StacksEpochId) -> bool;
 }
 
-impl TransactionAuth {
-    pub fn from_p2pkh(privk: &StacksPrivateKey) -> Option<TransactionAuth> {
-        match TransactionSpendingCondition::new_singlesig_p2pkh(StacksPublicKey::from_private(
-            privk,
-        )) {
-            Some(auth) => Some(TransactionAuth::Standard(auth)),
-            None => None,
-        }
+impl TransactionAuthExt for TransactionAuth {
+    fn from_p2pkh(privk: &StacksPrivateKey) -> Option<TransactionAuth> {
+        TransactionSpendingCondition::new_singlesig_p2pkh(StacksPublicKey::from_private(privk))
+            .map(TransactionAuth::Standard)
     }
 
-    pub fn from_p2sh(privks: &[StacksPrivateKey], num_sigs: u16) -> Option<TransactionAuth> {
-        let mut pubks = vec![];
-        for privk in privks.iter() {
-            pubks.push(StacksPublicKey::from_private(privk));
-        }
-
-        match TransactionSpendingCondition::new_multisig_p2sh(num_sigs, pubks) {
-            Some(auth) => Some(TransactionAuth::Standard(auth)),
-            None => None,
-        }
+    fn from_p2sh(privks: &[StacksPrivateKey], num_sigs: u16) -> Option<TransactionAuth> {
+        let pubks = privks.iter().map(StacksPublicKey::from_private).collect();
+        TransactionSpendingCondition::new_multisig_p2sh(num_sigs, pubks)
+            .map(TransactionAuth::Standard)
     }
 
-    pub fn from_order_independent_p2sh(
+    fn from_order_independent_p2sh(
         privks: &[StacksPrivateKey],
         num_sigs: u16,
     ) -> Option<TransactionAuth> {
         let pubks = privks.iter().map(StacksPublicKey::from_private).collect();
-
         TransactionSpendingCondition::new_multisig_order_independent_p2sh(num_sigs, pubks)
             .map(TransactionAuth::Standard)
     }
 
-    pub fn from_order_independent_p2wsh(
+    fn from_order_independent_p2wsh(
         privks: &[StacksPrivateKey],
         num_sigs: u16,
     ) -> Option<TransactionAuth> {
         let pubks = privks.iter().map(StacksPublicKey::from_private).collect();
-
         TransactionSpendingCondition::new_multisig_order_independent_p2wsh(num_sigs, pubks)
             .map(TransactionAuth::Standard)
     }
 
-    pub fn from_p2wpkh(privk: &StacksPrivateKey) -> Option<TransactionAuth> {
-        match TransactionSpendingCondition::new_singlesig_p2wpkh(StacksPublicKey::from_private(
-            privk,
-        )) {
-            Some(auth) => Some(TransactionAuth::Standard(auth)),
-            None => None,
-        }
+    fn from_p2wpkh(privk: &StacksPrivateKey) -> Option<TransactionAuth> {
+        TransactionSpendingCondition::new_singlesig_p2wpkh(StacksPublicKey::from_private(privk))
+            .map(TransactionAuth::Standard)
     }
 
-    pub fn from_p2wsh(privks: &[StacksPrivateKey], num_sigs: u16) -> Option<TransactionAuth> {
-        let mut pubks = vec![];
-        for privk in privks.iter() {
-            pubks.push(StacksPublicKey::from_private(privk));
-        }
-
-        match TransactionSpendingCondition::new_multisig_p2wsh(num_sigs, pubks) {
-            Some(auth) => Some(TransactionAuth::Standard(auth)),
-            None => None,
-        }
+    fn from_p2wsh(privks: &[StacksPrivateKey], num_sigs: u16) -> Option<TransactionAuth> {
+        let pubks = privks.iter().map(StacksPublicKey::from_private).collect();
+        TransactionSpendingCondition::new_multisig_p2wsh(num_sigs, pubks)
+            .map(TransactionAuth::Standard)
     }
 
-    /// merge two standard auths into a sponsored auth.
-    /// build them with the above helper methods
-    pub fn into_sponsored(self, sponsor_auth: TransactionAuth) -> Option<TransactionAuth> {
-        match (self, sponsor_auth) {
-            (TransactionAuth::Standard(sc), TransactionAuth::Standard(sp)) => {
-                Some(TransactionAuth::Sponsored(sc, sp))
-            }
-            (_, _) => None,
-        }
-    }
-
-    /// Directly set the sponsor spending condition
-    pub fn set_sponsor(
+    fn set_sponsor(
         &mut self,
         sponsor_spending_cond: TransactionSpendingCondition,
     ) -> Result<(), Error> {
@@ -650,66 +608,7 @@ impl TransactionAuth {
         }
     }
 
-    pub fn is_standard(&self) -> bool {
-        matches!(self, TransactionAuth::Standard(_))
-    }
-
-    pub fn is_sponsored(&self) -> bool {
-        matches!(self, TransactionAuth::Sponsored(..))
-    }
-
-    /// When beginning to sign a sponsored transaction, the origin account will not commit to any
-    /// information about the sponsor (only that it is sponsored).  It does so by using sentinel
-    /// sponsored account information.
-    pub fn into_initial_sighash_auth(self) -> TransactionAuth {
-        match self {
-            TransactionAuth::Standard(mut origin) => {
-                origin.clear();
-                TransactionAuth::Standard(origin)
-            }
-            TransactionAuth::Sponsored(mut origin, _) => {
-                origin.clear();
-                TransactionAuth::Sponsored(
-                    origin,
-                    TransactionSpendingCondition::new_initial_sighash(),
-                )
-            }
-        }
-    }
-
-    pub fn origin(&self) -> &TransactionSpendingCondition {
-        match *self {
-            TransactionAuth::Standard(ref s) => s,
-            TransactionAuth::Sponsored(ref s, _) => s,
-        }
-    }
-
-    pub fn get_origin_nonce(&self) -> u64 {
-        self.origin().nonce()
-    }
-
-    pub fn set_origin_nonce(&mut self, n: u64) {
-        match *self {
-            TransactionAuth::Standard(ref mut s) => s.set_nonce(n),
-            TransactionAuth::Sponsored(ref mut s, _) => s.set_nonce(n),
-        }
-    }
-
-    pub fn sponsor(&self) -> Option<&TransactionSpendingCondition> {
-        match *self {
-            TransactionAuth::Standard(_) => None,
-            TransactionAuth::Sponsored(_, ref s) => Some(s),
-        }
-    }
-
-    pub fn get_sponsor_nonce(&self) -> Option<u64> {
-        match self.sponsor() {
-            None => None,
-            Some(s) => Some(s.nonce()),
-        }
-    }
-
-    pub fn set_sponsor_nonce(&mut self, n: u64) -> Result<(), Error> {
+    fn set_sponsor_nonce(&mut self, n: u64) -> Result<(), Error> {
         match *self {
             TransactionAuth::Standard(_) => Err(Error::IncompatibleSpendingConditionError),
             TransactionAuth::Sponsored(_, ref mut s) => {
@@ -719,21 +618,7 @@ impl TransactionAuth {
         }
     }
 
-    pub fn set_tx_fee(&mut self, tx_fee: u64) {
-        match *self {
-            TransactionAuth::Standard(ref mut s) => s.set_tx_fee(tx_fee),
-            TransactionAuth::Sponsored(_, ref mut s) => s.set_tx_fee(tx_fee),
-        }
-    }
-
-    pub fn get_tx_fee(&self) -> u64 {
-        match *self {
-            TransactionAuth::Standard(ref s) => s.get_tx_fee(),
-            TransactionAuth::Sponsored(_, ref s) => s.get_tx_fee(),
-        }
-    }
-
-    pub fn verify_origin(&self, initial_sighash: &Txid) -> Result<Txid, net_error> {
+    fn verify_origin(&self, initial_sighash: &Txid) -> Result<Txid, net_error> {
         match *self {
             TransactionAuth::Standard(ref origin_condition) => {
                 origin_condition.verify(initial_sighash, &TransactionAuthFlags::AuthStandard)
@@ -744,7 +629,7 @@ impl TransactionAuth {
         }
     }
 
-    pub fn verify(&self, initial_sighash: &Txid) -> Result<(), net_error> {
+    fn verify(&self, initial_sighash: &Txid) -> Result<(), net_error> {
         let origin_sighash = self.verify_origin(initial_sighash)?;
         match *self {
             TransactionAuth::Standard(_) => Ok(()),
@@ -754,22 +639,7 @@ impl TransactionAuth {
         }
     }
 
-    /// Clear out all transaction auth fields, nonces, and fee rates from the spending condition(s).
-    pub fn clear(&mut self) {
-        match *self {
-            TransactionAuth::Standard(ref mut origin_condition) => {
-                origin_condition.clear();
-            }
-            TransactionAuth::Sponsored(ref mut origin_condition, ref mut sponsor_condition) => {
-                origin_condition.clear();
-                sponsor_condition.clear();
-            }
-        }
-    }
-
-    /// Checks if this TransactionAuth is supported in the passed epoch
-    /// OrderIndependent multisig is not supported before epoch 3.0
-    pub fn is_supported_in_epoch(&self, epoch_id: StacksEpochId) -> bool {
+    fn is_supported_in_epoch(&self, epoch_id: StacksEpochId) -> bool {
         match self {
             TransactionAuth::Standard(origin) => origin.is_supported_in_epoch(epoch_id),
             TransactionAuth::Sponsored(origin, sponsor) => {
@@ -782,9 +652,10 @@ impl TransactionAuth {
 #[rustfmt::skip]
 #[cfg(test)]
 mod test {
-    use super::*;
+    use stacks_common::codec::StacksMessageCodec;
     use stacks_common::util::hash::Hash160;
 
+    use super::*;
     use crate::chainstate::stacks::{StacksPublicKey as PubKey, TransactionAuthFieldID};
     use crate::net::codec::test::check_codec_and_corruption;
 

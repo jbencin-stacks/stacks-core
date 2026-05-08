@@ -31,7 +31,7 @@ use crate::burnchains::Txid;
 use crate::chainstate::stacks::db::test::{chainstate_path, instantiate_chainstate};
 use crate::chainstate::stacks::{
     StacksTransaction, TokenTransferMemo, TransactionAnchorMode, TransactionAuth,
-    TransactionPayload, TransactionPostConditionMode, TransactionVersion,
+    TransactionAuthExt, TransactionPayload, TransactionPostConditionMode, TransactionVersion,
 };
 use crate::core::mempool::{decode_tx_stream, MemPoolSyncData, TxTag, MAX_BLOOM_COUNTER_TXS};
 use crate::core::MemPoolDB;

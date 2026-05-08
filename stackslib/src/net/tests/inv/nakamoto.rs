@@ -36,7 +36,7 @@ use crate::chainstate::nakamoto::tests::node::TestStacker;
 use crate::chainstate::nakamoto::NakamotoChainState;
 use crate::chainstate::stacks::{
     StacksTransaction, StacksTransactionSigner, TokenTransferMemo, TransactionAnchorMode,
-    TransactionAuth, TransactionPayload, TransactionVersion,
+    TransactionAuth, TransactionAuthExt, TransactionPayload, TransactionVersion,
 };
 use crate::clarity::vm::types::StacksAddressExtensions;
 use crate::core::test_util::to_addr;

@@ -2525,7 +2525,7 @@ pub mod tests {
     use blockstack_lib::chainstate::nakamoto::{NakamotoBlock, NakamotoBlockHeader};
     use blockstack_lib::chainstate::stacks::{
         StacksTransaction, TenureChangeCause, TenureChangePayload, TransactionAuth,
-        TransactionVersion,
+        TransactionAuthExt, TransactionVersion,
     };
     use clarity::types::chainstate::{StacksBlockId, StacksPrivateKey, StacksPublicKey};
     use clarity::types::{PrivateKey, StacksAddressExt};

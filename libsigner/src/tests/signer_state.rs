@@ -16,7 +16,7 @@ use std::collections::HashMap;
 
 use blockstack_lib::chainstate::stacks::{
     StacksTransaction, TokenTransferMemo, TransactionAnchorMode, TransactionAuth,
-    TransactionPayload, TransactionPostConditionMode, TransactionVersion,
+    TransactionAuthExt, TransactionPayload, TransactionPostConditionMode, TransactionVersion,
 };
 use clarity::types::chainstate::{
     ConsensusHash, StacksAddress, StacksBlockId, StacksPrivateKey, StacksPublicKey,

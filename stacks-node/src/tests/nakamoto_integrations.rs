@@ -66,7 +66,7 @@ use stacks::chainstate::stacks::{
     AssetInfo, FungibleConditionCode, NonfungibleConditionCode, PostConditionPrincipal,
     SinglesigHashMode, SinglesigSpendingCondition, StacksTransaction, StacksTransactionSigner,
     TenureChangeCause, TenureChangePayload, TransactionAnchorMode, TransactionAuth,
-    TransactionContractCall, TransactionPayload, TransactionPostCondition,
+    TransactionAuthExt, TransactionContractCall, TransactionPayload, TransactionPostCondition,
     TransactionPostConditionMode, TransactionPublicKeyEncoding, TransactionSmartContract,
     TransactionSpendingCondition, TransactionVersion, MAX_BLOCK_LEN,
 };

@@ -44,7 +44,8 @@ use crate::chainstate::stacks::miner::{BlockBuilderSettings, StacksMicroblockBui
 use crate::chainstate::stacks::{
     CoinbasePayload, StacksBlock, StacksBlockBuilder, StacksBlockHeader, StacksMicroblock,
     StacksTransaction, StacksTransactionSigner, TokenTransferMemo, TransactionAnchorMode,
-    TransactionAuth, TransactionPayload, TransactionPostConditionMode, TransactionVersion,
+    TransactionAuth, TransactionAuthExt, TransactionPayload, TransactionPostConditionMode,
+    TransactionVersion,
 };
 use crate::core::MemPoolDB;
 use crate::net::db::PeerDB;

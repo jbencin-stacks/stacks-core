@@ -65,8 +65,8 @@ use crate::chainstate::stacks::miner::{
 };
 use crate::chainstate::stacks::{
     CoinbasePayload, Error, StacksTransaction, StacksTransactionSigner, TenureChangeCause,
-    TenureChangePayload, TransactionAnchorMode, TransactionAuth, TransactionPayload,
-    TransactionVersion,
+    TenureChangePayload, TransactionAnchorMode, TransactionAuth, TransactionAuthExt,
+    TransactionPayload, TransactionVersion,
 };
 use crate::clarity::vm::types::StacksAddressExtensions;
 use crate::clarity_vm::clarity::ClarityInstance;

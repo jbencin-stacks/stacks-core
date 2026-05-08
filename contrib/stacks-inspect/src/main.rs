@@ -29,8 +29,8 @@ use stacks_inspect::{
 use stackslib::chainstate::stacks::miner::BlockBuilderSettings;
 use stackslib::chainstate::stacks::{
     CoinbasePayload, StacksBlock, StacksBlockBuilder, StacksMicroblock, StacksTransaction,
-    StacksTransactionSigner, TransactionAnchorMode, TransactionAuth, TransactionPayload,
-    TransactionVersion,
+    StacksTransactionSigner, TransactionAnchorMode, TransactionAuth, TransactionAuthExt,
+    TransactionPayload, TransactionVersion,
 };
 use stackslib::config::{Config, ConfigFile};
 use stackslib::core::{

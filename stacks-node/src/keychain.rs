@@ -1,6 +1,6 @@
 use stacks::burnchains::BurnchainSigner;
 use stacks::chainstate::stacks::{
-    StacksPrivateKey, StacksPublicKey, StacksTransactionSigner, TransactionAuth,
+    StacksPrivateKey, StacksPublicKey, StacksTransactionSigner, TransactionAuth, TransactionAuthExt,
 };
 use stacks_common::address::{
     AddressHashMode, C32_ADDRESS_VERSION_MAINNET_SINGLESIG, C32_ADDRESS_VERSION_TESTNET_SINGLESIG,
@@ -241,8 +241,8 @@ mod tests {
     use stacks::burnchains::PrivateKey;
     use stacks::chainstate::stacks::{
         StacksPrivateKey, StacksPublicKey, StacksTransaction, StacksTransactionSigner,
-        TokenTransferMemo, TransactionAuth, TransactionPayload, TransactionPostConditionMode,
-        TransactionVersion,
+        TokenTransferMemo, TransactionAuth, TransactionAuthExt, TransactionPayload,
+        TransactionPostConditionMode, TransactionVersion,
     };
     use stacks_common::address::AddressHashMode;
     use stacks_common::types::chainstate::StacksAddress;

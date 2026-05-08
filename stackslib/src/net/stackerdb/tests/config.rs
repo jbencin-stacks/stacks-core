@@ -26,8 +26,8 @@ use stacks_common::util::hash::Hash160;
 use crate::burnchains::Burnchain;
 use crate::chainstate::stacks::boot::test::instantiate_pox_peer_with_epoch;
 use crate::chainstate::stacks::{
-    StacksTransaction, StacksTransactionSigner, TransactionAuth, TransactionPayload,
-    TransactionVersion,
+    StacksTransaction, StacksTransactionSigner, TransactionAuth, TransactionAuthExt,
+    TransactionPayload, TransactionVersion,
 };
 use crate::core::{StacksEpochExtension, BITCOIN_REGTEST_FIRST_BLOCK_HASH};
 use crate::net::test::TestEventObserver;

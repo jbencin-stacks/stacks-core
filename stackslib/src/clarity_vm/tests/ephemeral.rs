@@ -38,7 +38,7 @@ use crate::chainstate::stacks::index::ClarityMarfTrieId;
 use crate::chainstate::stacks::miner::{BlockBuilder, BlockLimitFunction, TransactionResult};
 use crate::chainstate::stacks::{
     StacksTransaction, StacksTransactionSigner, TransactionAnchorMode, TransactionAuth,
-    TransactionContractCall, TransactionPayload, TransactionPostConditionMode,
+    TransactionAuthExt, TransactionContractCall, TransactionPayload, TransactionPostConditionMode,
     TransactionSmartContract, TransactionVersion,
 };
 use crate::clarity::vm::database::ClarityBackingStore;

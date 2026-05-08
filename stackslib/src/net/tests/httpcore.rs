@@ -30,7 +30,7 @@ use crate::burnchains::Txid;
 use crate::chainstate::stacks::db::blocks::test::make_sample_microblock_stream;
 use crate::chainstate::stacks::test::make_codec_test_block;
 use crate::chainstate::stacks::{
-    StacksTransaction, TokenTransferMemo, TransactionAuth, TransactionPayload,
+    StacksTransaction, TokenTransferMemo, TransactionAuth, TransactionAuthExt, TransactionPayload,
     TransactionPostConditionMode, TransactionVersion,
 };
 use crate::net::api::getneighbors::{RPCNeighbor, RPCNeighborsInfo};

@@ -29,7 +29,7 @@ use crate::chainstate::stacks::boot::test::{
 use crate::chainstate::stacks::db::StacksChainState;
 use crate::chainstate::stacks::{
     StacksTransaction, StacksTransactionSigner, TokenTransferMemo, TransactionAnchorMode,
-    TransactionAuth, TransactionPayload, TransactionVersion,
+    TransactionAuth, TransactionAuthExt, TransactionPayload, TransactionVersion,
 };
 use crate::net::api::getpoxinfo;
 use crate::net::connection::ConnectionOptions;

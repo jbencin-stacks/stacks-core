@@ -35,8 +35,9 @@ use stacks::chainstate::stacks::events::{StacksBlockEventData, TransactionOrigin
 use stacks::chainstate::stacks::{
     SinglesigHashMode, SinglesigSpendingCondition, StacksBlock, StacksTransactionSigner,
     TenureChangeCause, TenureChangePayload, TokenTransferMemo, TransactionAnchorMode,
-    TransactionAuth, TransactionContractCall, TransactionPayload, TransactionPostConditionMode,
-    TransactionPublicKeyEncoding, TransactionSpendingCondition, TransactionVersion,
+    TransactionAuth, TransactionAuthExt, TransactionContractCall, TransactionPayload,
+    TransactionPostConditionMode, TransactionPublicKeyEncoding, TransactionSpendingCondition,
+    TransactionVersion,
 };
 use stacks::core::test_util::{make_unsigned_tx, to_addr};
 use stacks::core::CHAIN_ID_TESTNET;
