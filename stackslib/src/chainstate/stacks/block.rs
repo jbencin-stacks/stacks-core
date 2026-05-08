@@ -25,7 +25,7 @@ use stacks_common::codec::{
 use stacks_common::types::chainstate::{
     BlockHeaderHash, StacksBlockId, StacksWorkScore, TrieHash, VRFSeed,
 };
-use stacks_common::util::hash::{Hash160PubKeyExt, MerkleTree, Sha512Trunc256Sum};
+use stacks_common::util::hash::{MerkleTree, Sha512Trunc256Sum};
 use stacks_common::util::retry::BoundReader;
 use stacks_common::util::secp256k1::MessageSignature;
 use stacks_common::util::vrf::*;

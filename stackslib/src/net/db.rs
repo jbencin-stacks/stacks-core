@@ -26,9 +26,7 @@ use stacks_common::types::net::PeerAddress;
 use stacks_common::types::sqlite::NO_PARAMS;
 use stacks_common::util;
 use stacks_common::util::get_epoch_time_secs;
-use stacks_common::util::hash::{
-    bin_bytes, hex_bytes, to_bin, to_hex, Hash160, Hash160PubKeyExt, Sha512Trunc256Sum,
-};
+use stacks_common::util::hash::{bin_bytes, hex_bytes, to_bin, to_hex, Hash160, Sha512Trunc256Sum};
 use stacks_common::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 
 use crate::burnchains::PrivateKey;

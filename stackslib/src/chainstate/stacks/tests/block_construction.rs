@@ -33,7 +33,7 @@ use rand::{thread_rng, Rng};
 use rusqlite::params;
 use stacks_common::address::*;
 use stacks_common::types::StacksAddressExt;
-use stacks_common::util::hash::{Hash160PubKeyExt, MerkleTree};
+use stacks_common::util::hash::MerkleTree;
 use stacks_common::util::secp256k1::Secp256k1PrivateKey;
 use stacks_common::util::{get_epoch_time_ms, sleep_ms};
 

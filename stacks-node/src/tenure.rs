@@ -14,7 +14,7 @@ use stacks::chainstate::stacks::{
 };
 use stacks::core::mempool::MemPoolDB;
 use stacks_common::types::chainstate::VRFSeed;
-use stacks_common::util::hash::{Hash160, Hash160PubKeyExt};
+use stacks_common::util::hash::Hash160;
 use stacks_common::util::vrf::VRFProof;
 
 /// Only used by the Helium (Mocknet) node

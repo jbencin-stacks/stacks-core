@@ -43,7 +43,7 @@ use stacks_common::types::chainstate::{
     BlockHeaderHash, ConsensusHash, StacksAddress, StacksBlockId, StacksPrivateKey, StacksPublicKey,
 };
 use stacks_common::types::StacksAddressExt;
-use stacks_common::util::hash::{Hash160, Hash160PubKeyExt};
+use stacks_common::util::hash::Hash160;
 use stacks_common::util::vrf::VRFProof;
 
 use super::miner::MinerTenureInfoCause;

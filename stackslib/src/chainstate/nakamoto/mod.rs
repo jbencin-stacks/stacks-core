@@ -37,9 +37,7 @@ use stacks_common::types::chainstate::{
     StacksPrivateKey, StacksPublicKey, TrieHash, VRFSeed,
 };
 use stacks_common::types::{PrivateKey, SIP031EmissionInterval, StacksEpochId};
-use stacks_common::util::hash::{
-    to_hex, Hash160, Hash160PubKeyExt, MerkleHashFunc, MerkleTree, Sha512Trunc256Sum,
-};
+use stacks_common::util::hash::{to_hex, Hash160, MerkleHashFunc, MerkleTree, Sha512Trunc256Sum};
 use stacks_common::util::retry::BoundReader;
 use stacks_common::util::secp256k1::MessageSignature;
 use stacks_common::util::vrf::{VRFProof, VRFPublicKey, VRF};

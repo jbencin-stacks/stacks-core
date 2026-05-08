@@ -32,28 +32,7 @@ pub use stacks_codec::hash::{
 // (`stacks_common::util::hash::{hex_bytes, to_hex, ...}`) keep working.
 pub use stacks_codec::hex::{bin_bytes, bytes_to_hex, hex_bytes, to_bin, to_hex, to_hex_prefixed};
 
-use crate::types::StacksPublicKeyBuffer;
-use crate::util::secp256k1::Secp256k1PublicKey;
 use crate::util::uint::Uint256;
-
-/// Methods on `Hash160` that depend on stacks-common-defined key types and
-/// therefore can't live in `stacks-codec` (which intentionally has no
-/// `stacks-common` dep). Bring this trait into scope to call
-/// `Hash160::from_node_public_key(...)` / `Hash160::from_node_public_key_buffer(...)`.
-pub trait Hash160PubKeyExt {
-    fn from_node_public_key(pubkey: &Secp256k1PublicKey) -> Hash160;
-    fn from_node_public_key_buffer(pubkey_buf: &StacksPublicKeyBuffer) -> Hash160;
-}
-
-impl Hash160PubKeyExt for Hash160 {
-    fn from_node_public_key(pubkey: &Secp256k1PublicKey) -> Hash160 {
-        Hash160::from_data(&pubkey.to_bytes_compressed())
-    }
-
-    fn from_node_public_key_buffer(pubkey_buf: &StacksPublicKeyBuffer) -> Hash160 {
-        Hash160::from_data(pubkey_buf.as_bytes())
-    }
-}
 
 // hash function for Merkle trees
 pub trait MerkleHashFunc {

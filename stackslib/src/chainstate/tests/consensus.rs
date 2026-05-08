@@ -27,7 +27,6 @@ use clarity::vm::types::{PrincipalData, ResponseData};
 use clarity::vm::{ClarityName, ClarityVersion, ContractName, Value as ClarityValue};
 use serde::{Deserialize, Serialize, Serializer};
 use stacks_common::bitvec::BitVec;
-use stacks_common::util::hash::Hash160PubKeyExt;
 
 use crate::burnchains::tests::TestBurnchainBlock;
 use crate::burnchains::PoxConstants;

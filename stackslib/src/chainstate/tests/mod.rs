@@ -41,7 +41,7 @@ use rand::{self, thread_rng, Rng};
 use stacks_common::address::*;
 use stacks_common::deps_common::bitcoin::network::serialize::BitcoinHash;
 use stacks_common::types::StacksEpochId;
-use stacks_common::util::hash::{Hash160PubKeyExt, *};
+use stacks_common::util::hash::*;
 use stacks_common::util::vrf::*;
 
 use self::nakamoto::test_signers::TestSigners;

@@ -35,7 +35,6 @@ use stacks::types::{PublicKey, StacksAddressExt};
 use stacks::util::hash::{Hash160, Sha512Trunc256Sum};
 use stacks::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 use stacks_common::types::chainstate::TrieHash;
-use stacks_common::util::hash::Hash160PubKeyExt;
 use stacks_common::util::sleep_ms;
 use stacks_signer::v0::tests::{
     TEST_PIN_SUPPORTED_SIGNER_PROTOCOL_VERSION, TEST_REJECT_ALL_BLOCK_PROPOSAL,

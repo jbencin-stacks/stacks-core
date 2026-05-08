@@ -154,7 +154,7 @@ pub(crate) mod tests {
         BlockHeaderHash, ConsensusHash, StacksAddress, StacksPrivateKey, StacksPublicKey,
     };
     use stacks_common::types::{StacksAddressExt, StacksEpochId, StacksPublicKeyBuffer};
-    use stacks_common::util::hash::{Hash160, Hash160PubKeyExt, Sha256Sum};
+    use stacks_common::util::hash::{Hash160, Sha256Sum};
 
     use super::*;
     use crate::config::{

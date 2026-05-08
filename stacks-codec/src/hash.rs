@@ -20,6 +20,8 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256, Sha512_256};
 
 use crate::hex::{hex_bytes, to_hex};
+use crate::secp256k1::Secp256k1PublicKey;
+use crate::signatures::StacksPublicKeyBuffer;
 
 macro_rules! impl_serde_json_hex_string {
     ($name:ident, $len:expr) => {
@@ -104,6 +106,16 @@ impl Hash160 {
         let sha2_result = Sha256::digest(data);
         let ripe_160_result = Ripemd160::digest(sha2_result);
         Hash160(ripe_160_result.into())
+    }
+
+    /// Hash160 of the compressed serialization of a public key.
+    pub fn from_node_public_key(pubkey: &Secp256k1PublicKey) -> Hash160 {
+        Hash160::from_data(&pubkey.to_bytes_compressed())
+    }
+
+    /// Hash160 of the wire-format compressed pubkey buffer (33 raw bytes).
+    pub fn from_node_public_key_buffer(pubkey_buf: &StacksPublicKeyBuffer) -> Hash160 {
+        Hash160::from_data(pubkey_buf.as_bytes())
     }
 }
 

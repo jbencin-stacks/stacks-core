@@ -93,7 +93,7 @@ use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, StacksAddress, StacksBlockId,
 };
 use stacks_common::types::{StacksAddressExt, StacksPublicKeyBuffer};
-use stacks_common::util::hash::{bytes_to_hex, hex_bytes, to_hex, Hash160, Hash160PubKeyExt};
+use stacks_common::util::hash::{bytes_to_hex, hex_bytes, to_hex, Hash160};
 use stacks_common::util::secp256k1::{Secp256k1PrivateKey, Secp256k1PublicKey};
 use stacks_common::util::{get_epoch_time_ms, get_epoch_time_secs, sleep_ms};
 use stacks_inspect;
