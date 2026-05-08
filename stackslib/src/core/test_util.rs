@@ -32,7 +32,8 @@ use crate::chainstate::stacks::{
     CoinbasePayload, StacksBlock, StacksMicroblock, StacksMicroblockHeader, StacksTransaction,
     StacksTransactionSigner, TenureChangePayload, TokenTransferMemo, TransactionAnchorMode,
     TransactionAuth, TransactionContractCall, TransactionPayload, TransactionPostConditionMode,
-    TransactionSmartContract, TransactionSpendingCondition, TransactionVersion,
+    TransactionSmartContract, TransactionSpendingCondition, TransactionSpendingConditionExt,
+    TransactionVersion,
 };
 use crate::util_lib::strings::StacksString;
 

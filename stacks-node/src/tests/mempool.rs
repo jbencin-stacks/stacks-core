@@ -27,7 +27,7 @@ use stacks::chainstate::stacks::{
     Error as ChainstateError, StacksBlockHeader, StacksMicroblockHeader, StacksPrivateKey,
     StacksPublicKey, StacksTransaction, StacksTransactionSigner, TokenTransferMemo,
     TransactionAnchorMode, TransactionAuth, TransactionPayload, TransactionSpendingCondition,
-    TransactionVersion, C32_ADDRESS_VERSION_MAINNET_SINGLESIG,
+    TransactionSpendingConditionExt, TransactionVersion, C32_ADDRESS_VERSION_MAINNET_SINGLESIG,
 };
 use stacks::codec::StacksMessageCodec;
 use stacks::core::mempool::MemPoolDB;

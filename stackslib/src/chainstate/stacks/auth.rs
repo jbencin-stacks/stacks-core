@@ -20,8 +20,7 @@ use stacks_common::address::AddressHashMode;
 use stacks_common::codec::{read_next, write_next, Error as codec_error, StacksMessageCodec};
 use stacks_common::types::chainstate::StacksAddress;
 use stacks_common::types::{StacksAddressExt, StacksEpochId};
-use stacks_common::util::hash::Hash160;
-use stacks_common::util::secp256k1::{MessageSignature, MESSAGE_SIGNATURE_ENCODED_SIZE};
+use stacks_common::util::secp256k1::MessageSignature;
 
 use crate::burnchains::{PrivateKey, Txid};
 use crate::chainstate::stacks::{
@@ -241,55 +240,61 @@ impl SpendingConditionVerifyExt for SinglesigSpendingCondition {
     }
 }
 
-impl StacksMessageCodec for TransactionSpendingCondition {
-    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), codec_error> {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref data) => {
-                data.consensus_serialize(fd)?;
-            }
-            TransactionSpendingCondition::Multisig(ref data) => {
-                data.consensus_serialize(fd)?;
-            }
-            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
-                data.consensus_serialize(fd)?;
-            }
-        }
-        Ok(())
-    }
+// `TransactionSpendingCondition`'s `StacksMessageCodec` impl and pure
+// inherent methods (constructors, simple accessors, `make_sighash_*`,
+// `address_*`, `clear`, ...) live in stacks-codec. Methods that need
+// stacks-common ext-traits (`StacksAddress::from_public_keys`),
+// stackslib's `net_error`, or `StacksEpochId` are expressed as the
+// `TransactionSpendingConditionExt` trait below — bring it into scope at
+// call sites.
 
-    fn consensus_deserialize<R: Read>(
-        fd: &mut R,
-    ) -> Result<TransactionSpendingCondition, codec_error> {
-        // peek the hash mode byte
-        let hash_mode_u8: u8 = read_next(fd)?;
-        let peek_buf = [hash_mode_u8];
-        let mut rrd = peek_buf.chain(fd);
-        let cond = {
-            if SinglesigHashMode::from_u8(hash_mode_u8).is_some() {
-                let cond = SinglesigSpendingCondition::consensus_deserialize(&mut rrd)?;
-                TransactionSpendingCondition::Singlesig(cond)
-            } else if MultisigHashMode::from_u8(hash_mode_u8).is_some() {
-                let cond = MultisigSpendingCondition::consensus_deserialize(&mut rrd)?;
-                TransactionSpendingCondition::Multisig(cond)
-            } else if OrderIndependentMultisigHashMode::from_u8(hash_mode_u8).is_some() {
-                let cond =
-                    OrderIndependentMultisigSpendingCondition::consensus_deserialize(&mut rrd)?;
-                TransactionSpendingCondition::OrderIndependentMultisig(cond)
-            } else {
-                test_debug!("Invalid address hash mode {}", hash_mode_u8);
-                return Err(codec_error::DeserializeError(format!(
-                    "Failed to parse spending condition: invalid hash mode {}",
-                    hash_mode_u8
-                )));
-            }
-        };
-
-        Ok(cond)
-    }
+pub trait TransactionSpendingConditionExt {
+    fn new_singlesig_p2pkh(pubkey: StacksPublicKey) -> Option<TransactionSpendingCondition>;
+    fn new_singlesig_p2wpkh(pubkey: StacksPublicKey) -> Option<TransactionSpendingCondition>;
+    fn new_multisig_p2sh(
+        num_sigs: u16,
+        pubkeys: Vec<StacksPublicKey>,
+    ) -> Option<TransactionSpendingCondition>;
+    fn new_multisig_p2wsh(
+        num_sigs: u16,
+        pubkeys: Vec<StacksPublicKey>,
+    ) -> Option<TransactionSpendingCondition>;
+    fn new_multisig_order_independent_p2sh(
+        num_sigs: u16,
+        pubkeys: Vec<StacksPublicKey>,
+    ) -> Option<TransactionSpendingCondition>;
+    fn new_multisig_order_independent_p2wsh(
+        num_sigs: u16,
+        pubkeys: Vec<StacksPublicKey>,
+    ) -> Option<TransactionSpendingCondition>;
+    fn next_signature(
+        cur_sighash: &Txid,
+        cond_code: &TransactionAuthFlags,
+        tx_fee: u64,
+        nonce: u64,
+        privk: &StacksPrivateKey,
+    ) -> Result<(MessageSignature, Txid), net_error>;
+    fn next_verification(
+        cur_sighash: &Txid,
+        cond_code: &TransactionAuthFlags,
+        tx_fee: u64,
+        nonce: u64,
+        key_encoding: &TransactionPublicKeyEncoding,
+        sig: &MessageSignature,
+    ) -> Result<(StacksPublicKey, Txid), net_error>;
+    /// Verify all signatures
+    fn verify(
+        &self,
+        initial_sighash: &Txid,
+        cond_code: &TransactionAuthFlags,
+    ) -> Result<Txid, net_error>;
+    /// Checks if this `TransactionSpendingCondition` is supported in the passed epoch.
+    /// OrderIndependent multisig is not supported before epoch 3.0.
+    fn is_supported_in_epoch(&self, epoch_id: StacksEpochId) -> bool;
 }
 
-impl TransactionSpendingCondition {
-    pub fn new_singlesig_p2pkh(pubkey: StacksPublicKey) -> Option<TransactionSpendingCondition> {
+impl TransactionSpendingConditionExt for TransactionSpendingCondition {
+    fn new_singlesig_p2pkh(pubkey: StacksPublicKey) -> Option<TransactionSpendingCondition> {
         let key_encoding = if pubkey.compressed() {
             TransactionPublicKeyEncoding::Compressed
         } else {
@@ -310,7 +315,7 @@ impl TransactionSpendingCondition {
         ))
     }
 
-    pub fn new_singlesig_p2wpkh(pubkey: StacksPublicKey) -> Option<TransactionSpendingCondition> {
+    fn new_singlesig_p2wpkh(pubkey: StacksPublicKey) -> Option<TransactionSpendingCondition> {
         let signer_addr = StacksAddress::from_public_keys(
             0,
             &AddressHashMode::SerializeP2WPKH,
@@ -330,7 +335,7 @@ impl TransactionSpendingCondition {
         ))
     }
 
-    pub fn new_multisig_p2sh(
+    fn new_multisig_p2sh(
         num_sigs: u16,
         pubkeys: Vec<StacksPublicKey>,
     ) -> Option<TransactionSpendingCondition> {
@@ -353,53 +358,7 @@ impl TransactionSpendingCondition {
         ))
     }
 
-    pub fn new_multisig_order_independent_p2sh(
-        num_sigs: u16,
-        pubkeys: Vec<StacksPublicKey>,
-    ) -> Option<TransactionSpendingCondition> {
-        let signer_addr = StacksAddress::from_public_keys(
-            0,
-            &AddressHashMode::SerializeP2SH,
-            usize::from(num_sigs),
-            &pubkeys,
-        )?;
-
-        Some(TransactionSpendingCondition::OrderIndependentMultisig(
-            OrderIndependentMultisigSpendingCondition {
-                signer: signer_addr.destruct().1,
-                nonce: 0,
-                tx_fee: 0,
-                hash_mode: OrderIndependentMultisigHashMode::P2SH,
-                fields: vec![],
-                signatures_required: num_sigs,
-            },
-        ))
-    }
-
-    pub fn new_multisig_order_independent_p2wsh(
-        num_sigs: u16,
-        pubkeys: Vec<StacksPublicKey>,
-    ) -> Option<TransactionSpendingCondition> {
-        let signer_addr = StacksAddress::from_public_keys(
-            0,
-            &AddressHashMode::SerializeP2WSH,
-            usize::from(num_sigs),
-            &pubkeys,
-        )?;
-
-        Some(TransactionSpendingCondition::OrderIndependentMultisig(
-            OrderIndependentMultisigSpendingCondition {
-                signer: signer_addr.destruct().1,
-                nonce: 0,
-                tx_fee: 0,
-                hash_mode: OrderIndependentMultisigHashMode::P2WSH,
-                fields: vec![],
-                signatures_required: num_sigs,
-            },
-        ))
-    }
-
-    pub fn new_multisig_p2wsh(
+    fn new_multisig_p2wsh(
         num_sigs: u16,
         pubkeys: Vec<StacksPublicKey>,
     ) -> Option<TransactionSpendingCondition> {
@@ -422,223 +381,50 @@ impl TransactionSpendingCondition {
         ))
     }
 
-    /// When committing to the fact that a transaction is sponsored, the origin doesn't know
-    /// anything else.  Instead, it commits to this sentinel value as its sponsor.
-    /// It is intractable to calculate a private key that could generate this.
-    pub fn new_initial_sighash() -> TransactionSpendingCondition {
-        TransactionSpendingCondition::Singlesig(SinglesigSpendingCondition {
-            signer: Hash160([0u8; 20]),
-            nonce: 0,
-            tx_fee: 0,
-            hash_mode: SinglesigHashMode::P2PKH,
-            key_encoding: TransactionPublicKeyEncoding::Compressed,
-            signature: MessageSignature::empty(),
-        })
+    fn new_multisig_order_independent_p2sh(
+        num_sigs: u16,
+        pubkeys: Vec<StacksPublicKey>,
+    ) -> Option<TransactionSpendingCondition> {
+        let signer_addr = StacksAddress::from_public_keys(
+            0,
+            &AddressHashMode::SerializeP2SH,
+            usize::from(num_sigs),
+            &pubkeys,
+        )?;
+
+        Some(TransactionSpendingCondition::OrderIndependentMultisig(
+            OrderIndependentMultisigSpendingCondition {
+                signer: signer_addr.destruct().1,
+                nonce: 0,
+                tx_fee: 0,
+                hash_mode: OrderIndependentMultisigHashMode::P2SH,
+                fields: vec![],
+                signatures_required: num_sigs,
+            },
+        ))
     }
 
-    pub fn num_signatures(&self) -> u16 {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref data) => {
-                if data.signature != MessageSignature::empty() {
-                    1
-                } else {
-                    0
-                }
-            }
-            TransactionSpendingCondition::Multisig(ref data) => {
-                let mut num_sigs: u16 = 0;
-                for field in data.fields.iter() {
-                    if field.is_signature() {
-                        num_sigs = num_sigs
-                            .checked_add(1)
-                            .expect("Unreasonable amount of signatures"); // something is seriously wrong if this fails
-                    }
-                }
-                num_sigs
-            }
-            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
-                let mut num_sigs: u16 = 0;
-                for field in data.fields.iter() {
-                    if field.is_signature() {
-                        num_sigs = num_sigs
-                            .checked_add(1)
-                            .expect("Unreasonable amount of signatures"); // something is seriously wrong if this fails
-                    }
-                }
-                num_sigs
-            }
-        }
-    }
+    fn new_multisig_order_independent_p2wsh(
+        num_sigs: u16,
+        pubkeys: Vec<StacksPublicKey>,
+    ) -> Option<TransactionSpendingCondition> {
+        let signer_addr = StacksAddress::from_public_keys(
+            0,
+            &AddressHashMode::SerializeP2WSH,
+            usize::from(num_sigs),
+            &pubkeys,
+        )?;
 
-    pub fn signatures_required(&self) -> u16 {
-        match *self {
-            TransactionSpendingCondition::Singlesig(_) => 1,
-            TransactionSpendingCondition::Multisig(ref multisig_data) => {
-                multisig_data.signatures_required
-            }
-            TransactionSpendingCondition::OrderIndependentMultisig(ref multisig_data) => {
-                multisig_data.signatures_required
-            }
-        }
-    }
-
-    pub fn nonce(&self) -> u64 {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref data) => data.nonce,
-            TransactionSpendingCondition::Multisig(ref data) => data.nonce,
-            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => data.nonce,
-        }
-    }
-
-    pub fn tx_fee(&self) -> u64 {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref data) => data.tx_fee,
-            TransactionSpendingCondition::Multisig(ref data) => data.tx_fee,
-            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => data.tx_fee,
-        }
-    }
-
-    pub fn set_nonce(&mut self, n: u64) {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref mut singlesig_data) => {
-                singlesig_data.nonce = n;
-            }
-            TransactionSpendingCondition::Multisig(ref mut multisig_data) => {
-                multisig_data.nonce = n;
-            }
-            TransactionSpendingCondition::OrderIndependentMultisig(ref mut multisig_data) => {
-                multisig_data.nonce = n;
-            }
-        }
-    }
-
-    pub fn set_tx_fee(&mut self, tx_fee: u64) {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref mut singlesig_data) => {
-                singlesig_data.tx_fee = tx_fee;
-            }
-            TransactionSpendingCondition::Multisig(ref mut multisig_data) => {
-                multisig_data.tx_fee = tx_fee;
-            }
-            TransactionSpendingCondition::OrderIndependentMultisig(ref mut multisig_data) => {
-                multisig_data.tx_fee = tx_fee;
-            }
-        }
-    }
-
-    pub fn get_tx_fee(&self) -> u64 {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref singlesig_data) => singlesig_data.tx_fee,
-            TransactionSpendingCondition::Multisig(ref multisig_data) => multisig_data.tx_fee,
-            TransactionSpendingCondition::OrderIndependentMultisig(ref multisig_data) => {
-                multisig_data.tx_fee
-            }
-        }
-    }
-
-    /// Get the mainnet account address of the spending condition
-    pub fn address_mainnet(&self) -> StacksAddress {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref data) => data.address_mainnet(),
-            TransactionSpendingCondition::Multisig(ref data) => data.address_mainnet(),
-            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
-                data.address_mainnet()
-            }
-        }
-    }
-
-    /// Get the mainnet account address of the spending condition
-    pub fn address_testnet(&self) -> StacksAddress {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref data) => data.address_testnet(),
-            TransactionSpendingCondition::Multisig(ref data) => data.address_testnet(),
-            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
-                data.address_testnet()
-            }
-        }
-    }
-
-    /// Get the address for an account, given the network flag
-    pub fn get_address(&self, mainnet: bool) -> StacksAddress {
-        if mainnet {
-            self.address_mainnet()
-        } else {
-            self.address_testnet()
-        }
-    }
-
-    /// Clear fee rate, nonces, signatures, and public keys
-    pub fn clear(&mut self) {
-        match *self {
-            TransactionSpendingCondition::Singlesig(ref mut singlesig_data) => {
-                singlesig_data.tx_fee = 0;
-                singlesig_data.nonce = 0;
-                singlesig_data.signature = MessageSignature::empty();
-            }
-            TransactionSpendingCondition::Multisig(ref mut multisig_data) => {
-                multisig_data.tx_fee = 0;
-                multisig_data.nonce = 0;
-                multisig_data.fields.clear();
-            }
-            TransactionSpendingCondition::OrderIndependentMultisig(ref mut multisig_data) => {
-                multisig_data.tx_fee = 0;
-                multisig_data.nonce = 0;
-                multisig_data.fields.clear();
-            }
-        }
-    }
-
-    pub fn make_sighash_presign(
-        cur_sighash: &Txid,
-        cond_code: &TransactionAuthFlags,
-        tx_fee: u64,
-        nonce: u64,
-    ) -> Txid {
-        // new hash combines the previous hash and all the new data this signature will add.  This
-        // includes:
-        // * the previous hash
-        // * the auth flag
-        // * the fee rate (big-endian 8-byte number)
-        // * nonce (big-endian 8-byte number)
-        let new_tx_hash_bits_len = 32 + 1 + 8 + 8;
-        let mut new_tx_hash_bits = Vec::with_capacity(new_tx_hash_bits_len as usize);
-
-        new_tx_hash_bits.extend_from_slice(cur_sighash.as_bytes());
-        new_tx_hash_bits.extend_from_slice(&[*cond_code as u8]);
-        new_tx_hash_bits.extend_from_slice(&tx_fee.to_be_bytes());
-        new_tx_hash_bits.extend_from_slice(&nonce.to_be_bytes());
-
-        assert!(new_tx_hash_bits.len() == new_tx_hash_bits_len as usize);
-
-        let next_sighash = Txid::from_sighash_bytes(&new_tx_hash_bits);
-        next_sighash
-    }
-
-    pub fn make_sighash_postsign(
-        cur_sighash: &Txid,
-        pubkey: &StacksPublicKey,
-        sig: &MessageSignature,
-    ) -> Txid {
-        // new hash combines the previous hash and all the new data this signature will add.  This
-        // includes:
-        // * the public key compression flag
-        // * the signature
-        let new_tx_hash_bits_len = 32 + 1 + MESSAGE_SIGNATURE_ENCODED_SIZE;
-        let mut new_tx_hash_bits = Vec::with_capacity(new_tx_hash_bits_len as usize);
-        let pubkey_encoding = if pubkey.compressed() {
-            TransactionPublicKeyEncoding::Compressed
-        } else {
-            TransactionPublicKeyEncoding::Uncompressed
-        };
-
-        new_tx_hash_bits.extend_from_slice(cur_sighash.as_bytes());
-        new_tx_hash_bits.extend_from_slice(&[pubkey_encoding as u8]);
-        new_tx_hash_bits.extend_from_slice(sig.as_bytes());
-
-        assert!(new_tx_hash_bits.len() == new_tx_hash_bits_len as usize);
-
-        let next_sighash = Txid::from_sighash_bytes(&new_tx_hash_bits);
-        next_sighash
+        Some(TransactionSpendingCondition::OrderIndependentMultisig(
+            OrderIndependentMultisigSpendingCondition {
+                signer: signer_addr.destruct().1,
+                nonce: 0,
+                tx_fee: 0,
+                hash_mode: OrderIndependentMultisigHashMode::P2WSH,
+                fields: vec![],
+                signatures_required: num_sigs,
+            },
+        ))
     }
 
     /// Linear-complexity signing algorithm -- we sign a rolling hash over all data committed to by
@@ -647,7 +433,7 @@ impl TransactionSpendingCondition {
     /// are authenticated by the spending condition's key hash).
     /// Calculates and returns the next signature and sighash, which the subsequent private key
     /// must sign.
-    pub fn next_signature(
+    fn next_signature(
         cur_sighash: &Txid,
         cond_code: &TransactionAuthFlags,
         tx_fee: u64,
@@ -677,7 +463,7 @@ impl TransactionSpendingCondition {
     /// to by order of signers (instead of re-serializing the tranasction each time).
     /// Calculates the next sighash and public key, which the next verifier must verify.
     /// Used by StacksTransaction::verify*
-    pub fn next_verification(
+    fn next_verification(
         cur_sighash: &Txid,
         cond_code: &TransactionAuthFlags,
         tx_fee: u64,
@@ -707,8 +493,7 @@ impl TransactionSpendingCondition {
         Ok((pubk, next_sighash))
     }
 
-    /// Verify all signatures
-    pub fn verify(
+    fn verify(
         &self,
         initial_sighash: &Txid,
         cond_code: &TransactionAuthFlags,
@@ -726,9 +511,7 @@ impl TransactionSpendingCondition {
         }
     }
 
-    /// Checks if this TransactionSpendingCondition is supported in the passed epoch
-    /// OrderIndependent multisig is not supported before epoch 3.0
-    pub fn is_supported_in_epoch(&self, epoch_id: StacksEpochId) -> bool {
+    fn is_supported_in_epoch(&self, epoch_id: StacksEpochId) -> bool {
         match self {
             TransactionSpendingCondition::Singlesig(..)
             | TransactionSpendingCondition::Multisig(..) => true,
@@ -1000,6 +783,8 @@ impl TransactionAuth {
 #[cfg(test)]
 mod test {
     use super::*;
+    use stacks_common::util::hash::Hash160;
+
     use crate::chainstate::stacks::{StacksPublicKey as PubKey, TransactionAuthFieldID};
     use crate::net::codec::test::check_codec_and_corruption;
 

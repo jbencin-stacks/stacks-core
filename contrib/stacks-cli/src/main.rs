@@ -42,7 +42,8 @@ use stackslib::chainstate::stacks::{
     StacksBlockHeader, StacksMicroblock, StacksPrivateKey, StacksPublicKey, StacksTransaction,
     StacksTransactionSigner, TokenTransferMemo, TransactionAnchorMode, TransactionAuth,
     TransactionContractCall, TransactionPayload, TransactionPostConditionMode,
-    TransactionSmartContract, TransactionSpendingCondition, TransactionVersion,
+    TransactionSmartContract, TransactionSpendingCondition, TransactionSpendingConditionExt,
+    TransactionVersion,
 };
 use stackslib::core::{CHAIN_ID_MAINNET, CHAIN_ID_TESTNET};
 use stackslib::net::Error as NetError;

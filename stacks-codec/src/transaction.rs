@@ -25,10 +25,11 @@ use crate::address::{
     C32_ADDRESS_VERSION_MAINNET_SINGLESIG, C32_ADDRESS_VERSION_TESTNET_MULTISIG,
     C32_ADDRESS_VERSION_TESTNET_SINGLESIG,
 };
+use crate::chainstate::Txid;
 use crate::hash::Hash160;
 use crate::retry::BoundReader;
 use crate::secp256k1::Secp256k1PublicKey;
-use crate::signatures::{MessageSignature, StacksPublicKeyBuffer};
+use crate::signatures::{MessageSignature, StacksPublicKeyBuffer, MESSAGE_SIGNATURE_ENCODED_SIZE};
 use crate::{read_next, write_next, Error as CodecError, StacksMessageCodec, MAX_MESSAGE_LEN};
 
 #[repr(u8)]
@@ -629,5 +630,277 @@ impl StacksMessageCodec for SinglesigSpendingCondition {
             key_encoding,
             signature,
         })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum TransactionSpendingCondition {
+    Singlesig(SinglesigSpendingCondition),
+    Multisig(MultisigSpendingCondition),
+    OrderIndependentMultisig(OrderIndependentMultisigSpendingCondition),
+}
+
+impl StacksMessageCodec for TransactionSpendingCondition {
+    fn consensus_serialize<W: Write>(&self, fd: &mut W) -> Result<(), CodecError> {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref data) => {
+                data.consensus_serialize(fd)?;
+            }
+            TransactionSpendingCondition::Multisig(ref data) => {
+                data.consensus_serialize(fd)?;
+            }
+            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
+                data.consensus_serialize(fd)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn consensus_deserialize<R: Read>(
+        fd: &mut R,
+    ) -> Result<TransactionSpendingCondition, CodecError> {
+        // peek the hash mode byte
+        let hash_mode_u8: u8 = read_next(fd)?;
+        let peek_buf = [hash_mode_u8];
+        let mut rrd = peek_buf.chain(fd);
+        let cond = {
+            if SinglesigHashMode::from_u8(hash_mode_u8).is_some() {
+                let cond = SinglesigSpendingCondition::consensus_deserialize(&mut rrd)?;
+                TransactionSpendingCondition::Singlesig(cond)
+            } else if MultisigHashMode::from_u8(hash_mode_u8).is_some() {
+                let cond = MultisigSpendingCondition::consensus_deserialize(&mut rrd)?;
+                TransactionSpendingCondition::Multisig(cond)
+            } else if OrderIndependentMultisigHashMode::from_u8(hash_mode_u8).is_some() {
+                let cond =
+                    OrderIndependentMultisigSpendingCondition::consensus_deserialize(&mut rrd)?;
+                TransactionSpendingCondition::OrderIndependentMultisig(cond)
+            } else {
+                return Err(CodecError::DeserializeError(format!(
+                    "Failed to parse spending condition: invalid hash mode {}",
+                    hash_mode_u8
+                )));
+            }
+        };
+
+        Ok(cond)
+    }
+}
+
+impl TransactionSpendingCondition {
+    /// When committing to the fact that a transaction is sponsored, the origin doesn't know
+    /// anything else.  Instead, it commits to this sentinel value as its sponsor.
+    /// It is intractable to calculate a private key that could generate this.
+    pub fn new_initial_sighash() -> TransactionSpendingCondition {
+        TransactionSpendingCondition::Singlesig(SinglesigSpendingCondition {
+            signer: Hash160([0u8; 20]),
+            nonce: 0,
+            tx_fee: 0,
+            hash_mode: SinglesigHashMode::P2PKH,
+            key_encoding: TransactionPublicKeyEncoding::Compressed,
+            signature: MessageSignature::empty(),
+        })
+    }
+
+    pub fn num_signatures(&self) -> u16 {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref data) => {
+                if data.signature != MessageSignature::empty() {
+                    1
+                } else {
+                    0
+                }
+            }
+            TransactionSpendingCondition::Multisig(ref data) => {
+                let mut num_sigs: u16 = 0;
+                for field in data.fields.iter() {
+                    if field.is_signature() {
+                        num_sigs = num_sigs
+                            .checked_add(1)
+                            .expect("Unreasonable amount of signatures");
+                    }
+                }
+                num_sigs
+            }
+            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
+                let mut num_sigs: u16 = 0;
+                for field in data.fields.iter() {
+                    if field.is_signature() {
+                        num_sigs = num_sigs
+                            .checked_add(1)
+                            .expect("Unreasonable amount of signatures");
+                    }
+                }
+                num_sigs
+            }
+        }
+    }
+
+    pub fn signatures_required(&self) -> u16 {
+        match *self {
+            TransactionSpendingCondition::Singlesig(_) => 1,
+            TransactionSpendingCondition::Multisig(ref multisig_data) => {
+                multisig_data.signatures_required
+            }
+            TransactionSpendingCondition::OrderIndependentMultisig(ref multisig_data) => {
+                multisig_data.signatures_required
+            }
+        }
+    }
+
+    pub fn nonce(&self) -> u64 {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref data) => data.nonce,
+            TransactionSpendingCondition::Multisig(ref data) => data.nonce,
+            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => data.nonce,
+        }
+    }
+
+    pub fn tx_fee(&self) -> u64 {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref data) => data.tx_fee,
+            TransactionSpendingCondition::Multisig(ref data) => data.tx_fee,
+            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => data.tx_fee,
+        }
+    }
+
+    pub fn set_nonce(&mut self, n: u64) {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref mut singlesig_data) => {
+                singlesig_data.nonce = n;
+            }
+            TransactionSpendingCondition::Multisig(ref mut multisig_data) => {
+                multisig_data.nonce = n;
+            }
+            TransactionSpendingCondition::OrderIndependentMultisig(ref mut multisig_data) => {
+                multisig_data.nonce = n;
+            }
+        }
+    }
+
+    pub fn set_tx_fee(&mut self, tx_fee: u64) {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref mut singlesig_data) => {
+                singlesig_data.tx_fee = tx_fee;
+            }
+            TransactionSpendingCondition::Multisig(ref mut multisig_data) => {
+                multisig_data.tx_fee = tx_fee;
+            }
+            TransactionSpendingCondition::OrderIndependentMultisig(ref mut multisig_data) => {
+                multisig_data.tx_fee = tx_fee;
+            }
+        }
+    }
+
+    pub fn get_tx_fee(&self) -> u64 {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref singlesig_data) => singlesig_data.tx_fee,
+            TransactionSpendingCondition::Multisig(ref multisig_data) => multisig_data.tx_fee,
+            TransactionSpendingCondition::OrderIndependentMultisig(ref multisig_data) => {
+                multisig_data.tx_fee
+            }
+        }
+    }
+
+    /// Get the mainnet account address of the spending condition
+    pub fn address_mainnet(&self) -> StacksAddress {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref data) => data.address_mainnet(),
+            TransactionSpendingCondition::Multisig(ref data) => data.address_mainnet(),
+            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
+                data.address_mainnet()
+            }
+        }
+    }
+
+    /// Get the mainnet account address of the spending condition
+    pub fn address_testnet(&self) -> StacksAddress {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref data) => data.address_testnet(),
+            TransactionSpendingCondition::Multisig(ref data) => data.address_testnet(),
+            TransactionSpendingCondition::OrderIndependentMultisig(ref data) => {
+                data.address_testnet()
+            }
+        }
+    }
+
+    /// Get the address for an account, given the network flag
+    pub fn get_address(&self, mainnet: bool) -> StacksAddress {
+        if mainnet {
+            self.address_mainnet()
+        } else {
+            self.address_testnet()
+        }
+    }
+
+    /// Clear fee rate, nonces, signatures, and public keys
+    pub fn clear(&mut self) {
+        match *self {
+            TransactionSpendingCondition::Singlesig(ref mut singlesig_data) => {
+                singlesig_data.tx_fee = 0;
+                singlesig_data.nonce = 0;
+                singlesig_data.signature = MessageSignature::empty();
+            }
+            TransactionSpendingCondition::Multisig(ref mut multisig_data) => {
+                multisig_data.tx_fee = 0;
+                multisig_data.nonce = 0;
+                multisig_data.fields.clear();
+            }
+            TransactionSpendingCondition::OrderIndependentMultisig(ref mut multisig_data) => {
+                multisig_data.tx_fee = 0;
+                multisig_data.nonce = 0;
+                multisig_data.fields.clear();
+            }
+        }
+    }
+
+    pub fn make_sighash_presign(
+        cur_sighash: &Txid,
+        cond_code: &TransactionAuthFlags,
+        tx_fee: u64,
+        nonce: u64,
+    ) -> Txid {
+        // new hash combines the previous hash and all the new data this signature will add.  This
+        // includes:
+        // * the previous hash
+        // * the auth flag
+        // * the fee rate (big-endian 8-byte number)
+        // * nonce (big-endian 8-byte number)
+        let new_tx_hash_bits_len = 32 + 1 + 8 + 8;
+        let mut new_tx_hash_bits = Vec::with_capacity(new_tx_hash_bits_len as usize);
+
+        new_tx_hash_bits.extend_from_slice(cur_sighash.as_bytes());
+        new_tx_hash_bits.extend_from_slice(&[*cond_code as u8]);
+        new_tx_hash_bits.extend_from_slice(&tx_fee.to_be_bytes());
+        new_tx_hash_bits.extend_from_slice(&nonce.to_be_bytes());
+
+        assert!(new_tx_hash_bits.len() == new_tx_hash_bits_len as usize);
+
+        Txid::from_sighash_bytes(&new_tx_hash_bits)
+    }
+
+    pub fn make_sighash_postsign(
+        cur_sighash: &Txid,
+        pubkey: &Secp256k1PublicKey,
+        sig: &MessageSignature,
+    ) -> Txid {
+        // new hash combines the previous hash and all the new data this signature will add.  This
+        // includes:
+        // * the public key compression flag
+        // * the signature
+        let new_tx_hash_bits_len = 32 + 1 + MESSAGE_SIGNATURE_ENCODED_SIZE;
+        let mut new_tx_hash_bits = Vec::with_capacity(new_tx_hash_bits_len as usize);
+        let pubkey_encoding = if pubkey.compressed() {
+            TransactionPublicKeyEncoding::Compressed
+        } else {
+            TransactionPublicKeyEncoding::Uncompressed
+        };
+
+        new_tx_hash_bits.extend_from_slice(cur_sighash.as_bytes());
+        new_tx_hash_bits.extend_from_slice(&[pubkey_encoding as u8]);
+        new_tx_hash_bits.extend_from_slice(sig.as_bytes());
+
+        assert!(new_tx_hash_bits.len() == new_tx_hash_bits_len as usize);
+
+        Txid::from_sighash_bytes(&new_tx_hash_bits)
     }
 }

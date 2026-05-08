@@ -50,6 +50,7 @@ use crate::util_lib::strings::StacksString;
 
 pub mod address;
 pub mod auth;
+pub use auth::{SpendingConditionVerifyExt, TransactionSpendingConditionExt};
 pub mod block;
 pub mod boot;
 pub mod db;
@@ -422,20 +423,13 @@ pub use stacks_codec::transaction::{
     TransactionAuthField, TransactionAuthFieldID, TransactionAuthFlags,
     TransactionPublicKeyEncoding,
 };
-// Spending-condition structs (Singlesig/Multisig/OrderIndependentMultisig)
-// live in stacks-codec; re-exported alongside the auth-tree primitive enums
-// above.
+// Spending-condition types (Singlesig/Multisig/OrderIndependentMultisig
+// structs and the `TransactionSpendingCondition` enum) live in
+// stacks-codec; re-exported alongside the auth-tree primitive enums above.
 pub use stacks_codec::transaction::{
     MultisigSpendingCondition, OrderIndependentMultisigSpendingCondition,
-    SinglesigSpendingCondition,
+    SinglesigSpendingCondition, TransactionSpendingCondition,
 };
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum TransactionSpendingCondition {
-    Singlesig(SinglesigSpendingCondition),
-    Multisig(MultisigSpendingCondition),
-    OrderIndependentMultisig(OrderIndependentMultisigSpendingCondition),
-}
 
 /// Types of transaction authorizations
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
