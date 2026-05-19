@@ -40,7 +40,6 @@ use crate::tests::neon_integrations::{get_chain_info, next_block_and_wait};
 use crate::BitcoinRegtestController;
 
 mod bitcoin;
-mod epoch_24;
 mod integrations;
 mod marf;
 mod mem_abort;
