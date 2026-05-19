@@ -283,21 +283,6 @@ jobs:
       signer_tag: ${{ needs.check-release.outputs.signer_tag }} # 6 place version format like 1.2.3.4.5.6
       is_node_release: ${{ needs.check-release.outputs.is_node_release }} # boolean used in matrix conditional in .github/workflows/release-github.yml
 
-  ## --- Epoch Tests ----------------------------------------------------------
-  epoch-tests:
-    name: Epoch Tests
-    needs:
-      - rustfmt
-      - changelog-check
-      - create-cache
-      - check-release
-    if: >-
-      !cancelled() &&
-      needs.rustfmt.result == 'success' &&
-      (needs.check-release.outputs.is_node_release == 'true' ||
-      needs.check-release.outputs.is_signer_release == 'true')
-    uses: ./.github/workflows/epoch-tests.yml
-
   ## --- Code Coverage --------------------------------------------------------
   # Merge and upload code coverage report files once all tests are done
   #

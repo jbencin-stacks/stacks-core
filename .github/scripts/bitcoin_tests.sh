@@ -84,30 +84,6 @@ tests::neon_integrations::test_one_miner_build_anchor_blocks_on_same_chain_witho
 tests::signer::v0::tenure_extend::tenure_extend_after_2_bad_commits
 tests::stackerdb::test_stackerdb_event_observer
 tests::stackerdb::test_stackerdb_load_store
-# Epoch tests are covered by the epoch-tests CI workflow, and don't need to run on every PR (for older epochs)
-tests::epoch_205::test_cost_limit_switch_version205
-tests::epoch_205::test_dynamic_db_method_costs
-tests::epoch_205::test_exact_block_costs
-tests::epoch_205::transition_empty_blocks
-tests::epoch_21::test_sortition_divergence_pre_21
-tests::epoch_21::test_v1_unlock_height_with_current_stackers
-tests::epoch_21::test_v1_unlock_height_with_delay_and_current_stackers
-tests::epoch_21::trait_invocation_cross_epoch
-tests::epoch_21::transition_adds_burn_block_height
-tests::epoch_21::transition_adds_get_pox_addr_recipients
-tests::epoch_21::transition_adds_mining_from_segwit
-tests::epoch_21::transition_adds_pay_to_alt_recipient_contract
-tests::epoch_21::transition_adds_pay_to_alt_recipient_principal
-tests::epoch_21::transition_empty_blocks
-tests::epoch_21::transition_fixes_bitcoin_rigidity
-tests::epoch_21::transition_removes_pox_sunset
-tests::epoch_22::disable_pox
-tests::epoch_22::pox_2_unlock_all
-tests::epoch_23::trait_invocation_behavior
-tests::epoch_24::fix_to_pox_contract
-tests::epoch_24::verify_auto_unlock_behavior
-# Disable this flaky test. We don't need continue testing Epoch 2 -> 3 transition
-tests::nakamoto_integrations::flash_blocks_on_epoch_3_FLAKY
 # These mempool tests take a long time to run, and are meant to be run manually
 tests::nakamoto_integrations::large_mempool_original_constant_fee
 tests::nakamoto_integrations::large_mempool_original_random_fee
