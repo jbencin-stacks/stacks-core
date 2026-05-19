@@ -28,7 +28,6 @@ use stacks::chainstate::stacks::{StacksPrivateKey, StacksTransaction, Transactio
 #[cfg(any(test, feature = "testing"))]
 use stacks::core::test_util::{make_contract_publish, to_addr};
 use stacks::core::{StacksEpoch, StacksEpochExtension, StacksEpochId, CHAIN_ID_TESTNET};
-use stacks_common::address::AddressHashMode;
 use stacks_common::codec::StacksMessageCodec;
 use stacks_common::types::chainstate::BlockHeaderHash;
 use stacks_common::util::get_epoch_time_secs;
@@ -41,7 +40,6 @@ use crate::tests::neon_integrations::{get_chain_info, next_block_and_wait};
 use crate::BitcoinRegtestController;
 
 mod bitcoin;
-mod epoch_22;
 mod epoch_23;
 mod epoch_24;
 mod integrations;
