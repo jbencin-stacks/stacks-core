@@ -24,9 +24,7 @@ use neon_integrations::test_observer::EVENT_OBSERVER_PORT;
 use rand::Rng;
 use stacks::chainstate::burn::ConsensusHash;
 use stacks::chainstate::stacks::events::StacksTransactionEvent;
-use stacks::chainstate::stacks::{
-    StacksPrivateKey, StacksPublicKey, StacksTransaction, TransactionPayload,
-};
+use stacks::chainstate::stacks::{StacksPrivateKey, StacksTransaction, TransactionPayload};
 #[cfg(any(test, feature = "testing"))]
 use stacks::core::test_util::{make_contract_publish, to_addr};
 use stacks::core::{StacksEpoch, StacksEpochExtension, StacksEpochId, CHAIN_ID_TESTNET};
@@ -43,7 +41,6 @@ use crate::tests::neon_integrations::{get_chain_info, next_block_and_wait};
 use crate::BitcoinRegtestController;
 
 mod bitcoin;
-mod epoch_21;
 mod epoch_22;
 mod epoch_23;
 mod epoch_24;
