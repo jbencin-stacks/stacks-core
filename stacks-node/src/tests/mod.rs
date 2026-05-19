@@ -42,7 +42,6 @@ use crate::helium::RunLoop;
 use crate::tests::neon_integrations::{get_chain_info, next_block_and_wait};
 use crate::BitcoinRegtestController;
 
-mod atlas;
 mod bitcoin;
 mod epoch_205;
 mod epoch_21;
